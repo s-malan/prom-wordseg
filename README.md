@@ -27,3 +27,7 @@ Reference paper: [TTI Paper](https://arxiv.org/abs/2307.00162)
 - wordseg/utils.py is where functions for basic utilities will be (saving (checkpoints and data), loading (checkpoints and data), data processing tasks)
 - data/ is where the data will be saved (add in .gitnore)
 - add comment blocks in .py files to describe functions (also inputs and outputs) (and one at top of file to explain what is in it)
+
+#### Notes
+- import: pytorch audio or librosa (audio manipulation), os (manipulate file structure), json (to save files in json format), fairseq (to load NN checkpoints)
+- use bash commands to load data (store in data dictionary)
