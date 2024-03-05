@@ -6,12 +6,15 @@ As part of the "What Do Self-Supervised Speech Models Know About Words?" paper, 
 Reference paper: [TTI Paper](https://arxiv.org/abs/2307.00162)
 
 ## Pre-Trained Models
-**TODO** (HuBERT and wav2vec2, which pre-trained models to use)
-- [Hubert](https://github.com/facebookresearch/fairseq/tree/main/examples/hubert)
-- [wav2vec 2.0](https://github.com/facebookresearch/fairseq/tree/main/examples/wav2vec)
+- Hubert
+  - [fairseq](https://github.com/facebookresearch/fairseq/tree/main/examples/hubert)
+  - [HuggingFace](https://huggingface.co/docs/transformers/en/model_doc/hubert)
+  - [bshall](https://github.com/bshall/hubert/tree/main)
+- wav2vec 2.0
+  - [fairseq](https://github.com/facebookresearch/fairseq/tree/main/examples/wav2vec)
+  - [HuggingFace](https://huggingface.co/docs/transformers/en/model_doc/wav2vec2)
 
 ## Datasets
-**TODO**
 - [LibriSpeech](https://www.openslr.org/12) Corpus
 - Buckeye
 - ZeroSpeech 20__
@@ -27,7 +30,13 @@ Reference paper: [TTI Paper](https://arxiv.org/abs/2307.00162)
 - wordseg/utils.py is where functions for basic utilities will be (saving (checkpoints and data), loading (checkpoints and data), data processing tasks)
 - data/ is where the data will be saved (add in .gitnore)
 - add comment blocks in .py files to describe functions (also inputs and outputs) (and one at top of file to explain what is in it)
+- when using the data, use pre-determined embeddings (they randomly sub-sample ~2k LibriSpeech utterances, thus sample ~2k embedding files)
 
 #### Notes
 - import: pytorch audio or librosa (audio manipulation), os (manipulate file structure), json (to save files in json format), fairseq (to load NN checkpoints)
 - use bash commands to load data (store in data dictionary)
+- to use venv for [HuggingFace](https://huggingface.co/docs/transformers/en/installation):
+  - create: python -m venv .venv
+  - activate: source .env/bin/activate OR source .venv/bin/activate
+  - deactivate: deactivate
+  - delete: deactivate AND sudo rm -rf venv
