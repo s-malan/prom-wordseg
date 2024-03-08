@@ -10,26 +10,6 @@ import numpy as np
 from scipy.spatial import distance
 from scipy.signal import find_peaks
 from scipy.signal import peak_prominences # used to find the prominences of the peaks
-from sklearn.preprocessing import StandardScaler # https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html
-
-def normalize_features(features): # TODO - move to utils.py, maybe do over full sample of embeddings
-    """
-    Normalizes the feature embeddings to have a mean of 0 and a standard deviation of 1
-
-    Parameters
-    ----------
-    features : numpy.ndarray
-        The feature embeddings to normalize
-
-    Returns
-    -------
-    numpy.ndarray
-        The normalized feature embeddings
-    """
-    scaler = StandardScaler()
-    scaler.partial_fit(features) # (n_samples, n_features)
-    normalized_features = scaler.transform(features) # (n_samples, n_features)
-    return normalized_features
 
 def get_distance(embedding): # TODO check if works, also check axis
     """

@@ -13,6 +13,7 @@ from glob import glob
 import os
 from pathlib import Path
 import textgrids # https://pypi.org/project/praat-textgrids/
+from sklearn.preprocessing import StandardScaler # https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html
 
 class Alignment_Data:
     """
@@ -113,6 +114,48 @@ class Alignments:
         embeddings_sample = np.random.choice(all_embeddings, self.num_files, replace=False)
         return embeddings_sample
 
+    def load_embeddings(self, files): # Works
+        """
+        Load the sampled embeddings from file paths
+
+        Parameters
+        ----------
+        self : Class
+            The object containing all information to find alignments for the selected embeddings
+        files : list (String)
+            List of file paths to the sampled embeddings
+
+        Return
+        ------
+        output : list (Path)
+            A list of file paths to the alignment files corresponding to the sampled embeddings
+        """
+
+        embeddings = []
+
+        for file in files:
+            embeddings.append(torch.from_numpy(np.load(file)))
+        return embeddings
+    
+    def normalize_features(features): # TODO do over full sample of embeddings
+        """
+        Normalizes the feature embeddings to have a mean of 0 and a standard deviation of 1
+
+        Parameters
+        ----------
+        features : numpy.ndarray
+            The feature embeddings to normalize
+
+        Returns
+        -------
+        numpy.ndarray
+            The normalized feature embeddings
+        """
+        scaler = StandardScaler()
+        scaler.partial_fit(features) # (n_samples, n_features)
+        normalized_features = scaler.transform(features) # (n_samples, n_features)
+        return normalized_features
+
     def get_alignment_paths(self, files): # Works
         """
         Find Paths to the TextGrid files (alignments) corresponding to the sampled embeddings
@@ -141,7 +184,7 @@ class Alignments:
 
         return alignments
     
-    def set_alignments(self, files):
+    def set_alignments(self, files): # Works
         """
         Create Alignment_Data objects and set their attributes for each alignment file
 
