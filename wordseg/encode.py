@@ -52,12 +52,6 @@ class EncodeAudio:
             self.model.eval()
         else: #hubert_shall
             self.model = torch.hub.load("bshall/hubert:main", "hubert_soft", trust_repo=True).cuda()        
-
-    def extract_audio(self):
-        """
-        extract audio from the dataset directory and save it to memory
-        """
-        raise NotImplementedError
     
     def save_embedding(self, wav, file_path):
         """
@@ -332,4 +326,3 @@ if __name__ == "__main__":
     #         "encode_hubert_fairseq": encode_hubert_fairseq,
     #     }
     # )
-    # CLI: python wordseg/encode.py encode_w2v2_hf $args
