@@ -38,7 +38,7 @@ class EncodeAudio:
             # self.processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base-960h")
             self.model = Wav2Vec2Model.from_pretrained("facebook/wav2vec2-base-960h")
         elif self.model_name == "w2v2_fs":
-            ckpt_path = 'models/wav2vec_small.pt'
+            ckpt_path = '/media/hdd/models/wav2vec_small.pt'
             models, cfg, task = fairseq.checkpoint_utils.load_model_ensemble_and_task([ckpt_path])
             self.model = models[0]
             self.model.eval()
@@ -46,7 +46,7 @@ class EncodeAudio:
             # self.processor = AutoProcessor.from_pretrained("facebook/hubert-base-ls960")
             self.model = HubertModel.from_pretrained("facebook/hubert-base-ls960")
         elif self.model_name == "hubert_fs":
-            ckpt_path = "models/hubert_base_ls960.pt"
+            ckpt_path = "/media/hdd/models/hubert_base_ls960.pt"
             models, cfg, task = fairseq.checkpoint_utils.load_model_ensemble_and_task([ckpt_path], strict=False)
             self.model = models[0]
             self.model.eval()
@@ -104,7 +104,11 @@ class EncodeAudio:
 
         for i in range(len(x_layers)):
             x = x_layers[i]
-            out_path = (self.save_dir.joinpath(f'{self.model_name}',f'layer_{i+1}')) / file_path.relative_to(self.data_dir.parts[0])
+            
+            # out_path = (self.save_dir.joinpath(f'{self.model_name}',f'layer_{i+1}')) / file_path.relative_to(self.data_dir.parts[0])
+            path_prefix = os.path.commonprefix([self.save_dir.joinpath(f'{self.model_name}',f'layer_{i+1}'), file_path])
+            out_path = (self.save_dir.joinpath(f'{self.model_name}',f'layer_{i+1}')) / os.path.relpath(file_path, path_prefix)
+
             out_path.parent.mkdir(parents=True, exist_ok=True)
             np.save(out_path.with_suffix(".npy"), x.squeeze().cpu().numpy())
 
@@ -146,7 +150,11 @@ class EncodeAudio:
 
         for i in range(len(x_layers)): # save each layer
             x = x_layers[i][0].permute(1, 0, 2)
-            out_path = (self.save_dir.joinpath(f'{self.model_name}',f'layer_{i+1}')) / file_path.relative_to(self.data_dir.parts[0])
+            
+            # out_path = (self.save_dir.joinpath(f'{self.model_name}',f'layer_{i+1}')) / file_path.relative_to(self.data_dir.parts[0])
+            path_prefix = os.path.commonprefix([self.save_dir.joinpath(f'{self.model_name}',f'layer_{i+1}'), file_path])
+            out_path = (self.save_dir.joinpath(f'{self.model_name}',f'layer_{i+1}')) / os.path.relpath(file_path, path_prefix)
+
             out_path.parent.mkdir(parents=True, exist_ok=True)
             np.save(out_path.with_suffix(".npy"), x.squeeze().cpu().numpy())
 
@@ -182,7 +190,11 @@ class EncodeAudio:
 
         for i in range(len(x_layers)):
             x = x_layers[i]
-            out_path = (self.save_dir.joinpath(f'{self.model_name}',f'layer_{i+1}')) / file_path.relative_to(self.data_dir.parts[0])
+            
+            # out_path = (self.save_dir.joinpath(f'{self.model_name}',f'layer_{i+1}')) / file_path.relative_to(self.data_dir.parts[0])
+            path_prefix = os.path.commonprefix([self.save_dir.joinpath(f'{self.model_name}',f'layer_{i+1}'), file_path])
+            out_path = (self.save_dir.joinpath(f'{self.model_name}',f'layer_{i+1}')) / os.path.relpath(file_path, path_prefix)
+
             out_path.parent.mkdir(parents=True, exist_ok=True)
             np.save(out_path.with_suffix(".npy"), x.squeeze().cpu().numpy())
 
@@ -213,7 +225,10 @@ class EncodeAudio:
             with torch.no_grad(): #https://github.com/facebookresearch/fairseq/blob/main/fairseq/models/hubert/hubert.py
                 x, _ = self.model.extract_features(wav, output_layer = i)
 
-            out_path = (self.save_dir.joinpath(f'{self.model_name}',f'layer_{i+1}')) / file_path.relative_to(self.data_dir.parts[0])
+            # out_path = (self.save_dir.joinpath(f'{self.model_name}',f'layer_{i+1}')) / file_path.relative_to(self.data_dir.parts[0])
+            path_prefix = os.path.commonprefix([self.save_dir.joinpath(f'{self.model_name}',f'layer_{i+1}'), file_path])
+            out_path = (self.save_dir.joinpath(f'{self.model_name}',f'layer_{i+1}')) / os.path.relpath(file_path, path_prefix)
+
             out_path.parent.mkdir(parents=True, exist_ok=True)
             np.save(out_path.with_suffix(".npy"), x.squeeze().cpu().numpy())
     
@@ -246,7 +261,11 @@ class EncodeAudio:
                 wav = F.pad(wav, ((400 - 320) // 2, (400 - 320) // 2))
                 x, _ = self.model.encode(wav, layer=i)
             
-            out_path = (self.save_dir.joinpath(f'{self.model_name}',f'layer_{i+1}')) / file_path.relative_to(self.data_dir.parts[0])
+            # out_path = (self.save_dir.joinpath(f'{self.model_name}',f'layer_{i+1}')) / file_path.relative_to(self.data_dir.parts[0])
+            
+            path_prefix = os.path.commonprefix([self.save_dir.joinpath(f'{self.model_name}',f'layer_{i+1}'), file_path])
+            out_path = (self.save_dir.joinpath(f'{self.model_name}',f'layer_{i+1}')) / os.path.relpath(file_path, path_prefix)
+            
             out_path.parent.mkdir(parents=True, exist_ok=True)
             np.save(out_path.with_suffix(".npy"), x.squeeze().cpu().numpy())
     
@@ -254,7 +273,6 @@ class EncodeAudio:
         """
         Return the encodings for the dataset.
         """
-        #TODO get model type, encode the audio with encode_..., save the embedded data in save_dir matching the dataset structure
 
         # walk through data directory
         for (dirpath, dirnames, filenames) in os.walk(self.data_dir):
@@ -278,11 +296,9 @@ class EncodeAudio:
                     file_path = os.path.join(dirpath, file)
                     print('filepath', file_path)
 
-                    #load audiofile, TODO maybe use extract_audio function
                     wav, sr = torchaudio.load(file_path, backend='soundfile')
                     assert sr == 16000
 
-                    #TODO: encode audio, save to save_dir
                     self.save_embedding(wav, Path(file_path))
 
 
@@ -313,6 +329,7 @@ if __name__ == "__main__":
         type=str,
     )
     args = parser.parse_args() #python3 wordseg/encode.py w2v2_hf data/librispeech/dev-clean/ embeddings/
+                               #for hdd: python3 wordseg/encode.py w2v2_fs /media/hdd/data/librispeech/dev-clean/ /media/hdd/embeddings/
 
     # extract the audio from the dataset and save the embeddings
     encoder = EncodeAudio(args.model, args.in_dir, args.out_dir, args.extension)

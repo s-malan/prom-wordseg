@@ -137,7 +137,7 @@ class Alignments:
             embeddings.append(torch.from_numpy(np.load(file)))
         return embeddings
     
-    def normalize_features(features): # TODO do over full sample of embeddings
+    def normalize_features(self, features): # Works
         """
         Normalizes the feature embeddings to have a mean of 0 and a standard deviation of 1
 
@@ -151,9 +151,14 @@ class Alignments:
         numpy.ndarray
             The normalized feature embeddings
         """
+        
+        stacked_features = torch.cat(features, dim=0) # concatenate all features into one tensor with size (sum_seq_len, feature_dim (channels))
+
         scaler = StandardScaler()
-        scaler.partial_fit(features) # (n_samples, n_features)
-        normalized_features = scaler.transform(features) # (n_samples, n_features)
+        scaler.partial_fit(stacked_features) # (n_samples, n_features)
+        normalized_features = []
+        for feature in features:
+            normalized_features.append(torch.from_numpy(scaler.transform(feature))) # (n_samples, n_features)
         return normalized_features
 
     def get_alignment_paths(self, files): # Works
@@ -240,18 +245,18 @@ class Alignments:
         return frame_num * self.frames_per_ms / 1000 # frame_num * 20ms per frame / 1000ms per second
 
 if __name__ == "__main__":
-    x = torch.from_numpy(np.load('embeddings/w2v2_fs/layer_1/librispeech/dev-clean/84/121123/84-121123-0000.npy'))
+    x = torch.from_numpy(np.load('/media/hdd/embeddings/w2v2_fs/layer_1/librispeech/dev-clean/84/121123/84-121123-0000.npy'))
     print(x, x.shape)
-    y = torchaudio.load('data/librispeech/dev-clean/84/121123/84-121123-0000.flac')
+    y = torchaudio.load('/media/hdd/data/librispeech/dev-clean/84/121123/84-121123-0000.flac')
     print(y[0].shape)
 
     # Example usage
-    embeddings_dir = 'embeddings'
+    embeddings_dir = '/media/hdd/embeddings'
     model_name = 'w2v2_fs'
     layer = 12
-    alignments_dir = 'data/librispeech_alignments'
+    alignments_dir = '/media/hdd/data/librispeech_alignments'
 
-    aligner = Alignments(root_dir=embeddings_dir, model_name=model_name, layer=layer, data_dir=alignments_dir, num_files=1)
+    aligner = Alignments(root_dir=embeddings_dir, model_name=model_name, layer=layer, data_dir=alignments_dir, num_files=5, dir_depth=5) # hubert_shall: dir_depth=5, new: dir_depth=6
     sample = aligner.sample_embeddings()
     print(sample)
 
@@ -260,3 +265,21 @@ if __name__ == "__main__":
 
     aligner.set_alignments(files=alignments)
     print(aligner.alignment_data[0])
+
+    embeddings = aligner.load_embeddings(sample)
+    # print(embeddings)
+    # print(embeddings[0].shape)
+    # print(embeddings[0][:,0].shape)
+
+    print(torch.max(torch.mean(torch.cat(embeddings, dim=0), dim=0)))
+    print(torch.max(torch.std(torch.cat(embeddings, dim=0), dim=0)))
+
+    norm_embeddings = aligner.normalize_features(embeddings)
+    # print(norm_embeddings[0])
+    # print(norm_embeddings[0].shape)
+
+    # check if the channels are normalized separately (get mean over each 768 channels for each sample)
+    mean = torch.mean(torch.cat(norm_embeddings, dim=0), dim=0)
+    std = torch.std(torch.cat(norm_embeddings, dim=0), axis=0)
+    print(torch.max(mean))
+    print(torch.max(std))
