@@ -308,7 +308,7 @@ if __name__ == "__main__":
         "model",
         help="available models (wav2vec2.0: HuggingFace, fairseq, hubert: HuggingFace, fairseq, hubert:main)",
         choices=["w2v2_hf", "w2v2_fs", "hubert_hf", "hubert_fs", "hubert_shall"],
-        default="soft",
+        default="w2v2_hf",
     )
     parser.add_argument(
         "in_dir",

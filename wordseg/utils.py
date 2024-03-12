@@ -1,5 +1,5 @@
 """
-Utility functions to sample audio encodings, ...
+Utility functions to sample audio embeddings, normalize them, and get the corresponding alignments with their attributes.
 
 Author: Simon Malan
 Contact: 24227013@sun.ac.za
@@ -57,7 +57,7 @@ class Alignment_Data:
     def __str__(self):
         return f"Alignment_Data({self.dir}, {self.text}, {self.start}, {self.end})"
 
-class Alignments:
+class Features:
     """
     The object containing all information to find alignments for the selected embeddings
 
@@ -71,24 +71,23 @@ class Alignments:
         The number of the layer to get the embeddings from
     data_dir : String
         The path to the root directory of the alignments
-    dir_depth : int
-        The number of subdirectories from the root directory/model_name/layer to the embeddings (.npy files)
-        default: 5
     num_files : int
         The number of embeddings (utterances) to sample
         default: 2000
     frames_per_ms : int
         The number of frames a model processes per millisecond
         default: 20
+    alignment_data : list (Alignment_Data)
+        The objects containing all information of a specific alignment file
     """
+
     def __init__(
-        self, root_dir, model_name, layer, data_dir, dir_depth=5, num_files=2000, frames_per_ms=20
+        self, root_dir, model_name, layer, data_dir, num_files=2000, frames_per_ms=20
     ):
         self.root_dir = root_dir
         self.model_name = model_name
         self.layer = layer
         self.data_dir = data_dir
-        self.dir_depth = dir_depth
         self.num_files = num_files
         self.frames_per_ms = frames_per_ms
         self.alignment_data = []
@@ -104,13 +103,12 @@ class Alignments:
 
         Return
         ------
-        output : list
+        embeddings_sample : list
             List of file paths to the sampled embeddings
         """
 
-        search_path = "/".join(["*"] * self.dir_depth)
-        layer = 'layer_' + str(self.layer)
-        all_embeddings = glob(os.path.join(self.root_dir, self.model_name, layer, search_path + ".npy"))
+        layer = 'layer_' + str(self.layer) # TODO extract if not in subdirectory but just in the root_dir/model_name/layer directory
+        all_embeddings = glob(os.path.join(self.root_dir, self.model_name, layer, "**/*.npy"), recursive=True)
         embeddings_sample = np.random.choice(all_embeddings, self.num_files, replace=False)
         return embeddings_sample
 
@@ -127,8 +125,8 @@ class Alignments:
 
         Return
         ------
-        output : list (Path)
-            A list of file paths to the alignment files corresponding to the sampled embeddings
+        embeddings : list
+            A list of embeddings loaded from the file paths
         """
 
         embeddings = []
@@ -143,12 +141,14 @@ class Alignments:
 
         Parameters
         ----------
+        self : Class
+            The object containing all information to find alignments for the selected embeddings
         features : numpy.ndarray
             The feature embeddings to normalize
 
         Returns
         -------
-        numpy.ndarray
+        normalized_features : numpy.ndarray
             The normalized feature embeddings
         """
         
@@ -174,7 +174,7 @@ class Alignments:
 
         Return
         ------
-        output : list (Path)
+        alignments : list (Path)
             A list of file paths to the alignment files corresponding to the sampled embeddings
         """
 
@@ -223,7 +223,7 @@ class Alignments:
             The feature embedding frame number corresponding to the given number of seconds 
         """
 
-        return int(seconds / self.frames_per_ms / 1000) # seconds (= samples / sample_rate) / 20ms per frame * 1000ms per second
+        return round(seconds / self.frames_per_ms * 1000) # seconds (= samples / sample_rate) / 20ms per frame * 1000ms per second
 
     def get_sample_second(self, frame_num): # Works
         """
@@ -238,7 +238,7 @@ class Alignments:
 
         Return
         ------
-        output : int
+        output : double
             The number of seconds corresponding to the given feature embedding frame number
         """
 
@@ -256,7 +256,7 @@ if __name__ == "__main__":
     layer = 12
     alignments_dir = '/media/hdd/data/librispeech_alignments'
 
-    aligner = Alignments(root_dir=embeddings_dir, model_name=model_name, layer=layer, data_dir=alignments_dir, num_files=5, dir_depth=5) # hubert_shall: dir_depth=5, new: dir_depth=6
+    aligner = Features(root_dir=embeddings_dir, model_name=model_name, layer=layer, data_dir=alignments_dir, num_files=5)
     sample = aligner.sample_embeddings()
     print(sample)
 
