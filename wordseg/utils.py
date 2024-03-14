@@ -109,6 +109,9 @@ class Features:
 
         layer = 'layer_' + str(self.layer) # TODO extract if not in subdirectory but just in the root_dir/model_name/layer directory
         all_embeddings = glob(os.path.join(self.root_dir, self.model_name, layer, "**/*.npy"), recursive=True)
+        if self.num_files == -1: # sample all the data
+            return all_embeddings
+        
         embeddings_sample = np.random.choice(all_embeddings, self.num_files, replace=False)
         return embeddings_sample
 

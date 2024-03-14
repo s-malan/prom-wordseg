@@ -6,6 +6,8 @@ Contact: 24227013@sun.ac.za
 Date: March 2024
 """
 
+# TODO: NED, UWER
+
 import numpy as np
 
 def eval_segmentation(seg, ref, tolerance=1):
@@ -60,7 +62,6 @@ def eval_segmentation(seg, ref, tolerance=1):
             for i_seg in prediction:
                 if abs(i_ref - i_seg) <= tolerance:
                     num_hit += 1
-                    print(i_ref, i_seg)
                     break # makes the evaluation strict, so that a reference boundary can only be hit once
 
     # Calculate metrics:
@@ -118,19 +119,3 @@ def get_rvalue(precision, recall):
 
     rvalue = 1 - (np.abs(r1) + np.abs(r2))/2
     return rvalue
-
-# TODO: NED, UWER
-
-if __name__ == "__main__":
-
-    # pred1 = [4,33,50,57,68,84,94,107,131,135,144,149,153,161,177,184,192,202,210,220,228,251,279,287,297,326,330,336,343,361,371,381,392,407,411,422,429,447,455,464,472,512,516,527,530]
-    # gtru1 = [22, 32, 49, 60, 68, 82, 102, 109, 131, 164, 178, 184, 194, 202, 212, 222, 227, 243, 250, 266, 275, 293, 295, 316, 346, 356, 370, 382, 402, 414, 422, 429, 446, 456, 463, 472, 508, 535]
-
-    pred2 = [6,16,32,55,57,61,66,73,84,96,104,109,139,167]#[6,16,32,57,61,66,73,84,96,104,109,139,167]
-    gtru2 = [14, 30, 56, 74, 83, 105, 110, 120, 136, 156, 171]
-
-    pred = [pred2] #[pred2, pred2]
-    gtrue = [gtru2] #[gtru2, gtru2]
-
-    p, r, f = eval_segmentation(pred, gtrue, 1)
-    print(p, r, f)
