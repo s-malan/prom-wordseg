@@ -14,7 +14,7 @@ from pathlib import Path
 from evaluate import eval_segmentation, get_rvalue
 from segment import Segmentor
 
-def grid_search_layer(data, norm_embeddings):
+def grid_search_layer(data, norm_embeddings, strict):
     distances = ['euclidean', 'cosine']
     window_sizes = [3, 4, 5, 6, 7]
     prominences = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
@@ -36,7 +36,7 @@ def grid_search_layer(data, norm_embeddings):
                     alignment_frames = [data.get_frame_num(end_time) for end_time in alignment_times]
                     alignment_end_frames.append(alignment_frames)
                     
-                p, r, f = eval_segmentation(peaks, alignment_end_frames)
+                p, r, f = eval_segmentation(peaks, alignment_end_frames, strict=strict)
                 rval = get_rvalue(p, r)
                 if (f+rval)/2 > (optimal_parameters['f1'] + optimal_parameters['rval'])/2:
                     optimal_parameters['distance'] = distance
@@ -47,7 +47,7 @@ def grid_search_layer(data, norm_embeddings):
                 
     return optimal_parameters
 
-def grid_search(embeddings_dir, alignments_dir, sample_size=2000):   
+def grid_search(embeddings_dir, alignments_dir, sample_size=2000, strict = True):
     models = ['w2v2_hf', 'w2v2_fs', 'hubert_hf', 'hubert_fs', 'hubert_shall']
     layers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
     optimised_paramters = {}
@@ -65,7 +65,7 @@ def grid_search(embeddings_dir, alignments_dir, sample_size=2000):
             alignments = data.get_alignment_paths(files=sample) # get the paths to the alignments corresponding to the sampled embeddings
             data.set_alignments(files=alignments) # set the text, start and end attributes of the alignment files
 
-            hyperparameters = grid_search_layer(data, norm_embeddings)
+            hyperparameters = grid_search_layer(data, norm_embeddings, strict)
             optimised_paramters[model][layer] = hyperparameters
         print(optimised_paramters)
 
@@ -92,7 +92,11 @@ if __name__ == "__main__":
         help="number of embeddings to sample.",
         type=int,
     )
+    parser.add_argument( # optional argument to make the evaluation strict
+        '--strict',
+        action=argparse.BooleanOptionalAction
+    )
 
-    args = parser.parse_args() #python3 wordseg/optimize.py /media/hdd/embeddings /media/hdd/data/librispeech_alignments 2000
+    args = parser.parse_args() #python3 wordseg/optimize.py /media/hdd/embeddings /media/hdd/data/librispeech_alignments 2000 --strict
 
-    grid_search(args.embeddings_dir, args.alignments_dir, args.sample_size)
+    grid_search(args.embeddings_dir, args.alignments_dir, args.sample_size, args.strict)

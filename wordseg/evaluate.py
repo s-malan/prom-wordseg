@@ -10,7 +10,7 @@ Date: March 2024
 
 import numpy as np
 
-def eval_segmentation(seg, ref, tolerance=1):
+def eval_segmentation(seg, ref, strict=True, tolerance=1):
     """
     Calculate precision, recall, F-score for the segmentation boundaries.
 
@@ -62,7 +62,7 @@ def eval_segmentation(seg, ref, tolerance=1):
             for i_seg in prediction:
                 if abs(i_ref - i_seg) <= tolerance:
                     num_hit += 1
-                    break # makes the evaluation strict, so that a reference boundary can only be hit once
+                    if strict: break # makes the evaluation strict, so that a reference boundary can only be hit once
 
     # Calculate metrics:
     precision = float(num_hit/num_seg)

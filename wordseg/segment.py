@@ -110,7 +110,7 @@ class Segmentor:
             prominences_found = peak_prominences(smooth_distance, peaks_found)[0]
             peaks.append(peaks_found)
             prominences.append(prominences_found)
-
+        
         return peaks, prominences
 
 if __name__ == "__main__":

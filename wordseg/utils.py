@@ -59,7 +59,7 @@ class Alignment_Data:
 
 class Features:
     """
-    The object containing all information to find alignments for the selected embeddings
+    The object containing all information to find alignments for the selected embeddings.
 
     Parameters
     ----------
@@ -107,7 +107,7 @@ class Features:
             List of file paths to the sampled embeddings
         """
 
-        layer = 'layer_' + str(self.layer) # TODO extract if not in subdirectory but just in the root_dir/model_name/layer directory
+        layer = 'layer_' + str(self.layer)
         all_embeddings = glob(os.path.join(self.root_dir, self.model_name, layer, "**/*.npy"), recursive=True)
         if self.num_files == -1: # sample all the data
             return all_embeddings
@@ -255,8 +255,8 @@ if __name__ == "__main__":
 
     # Example usage
     embeddings_dir = '/media/hdd/embeddings'
-    model_name = 'w2v2_fs'
-    layer = 12
+    model_name = 'w2v2_hf'
+    layer = 1
     alignments_dir = '/media/hdd/data/librispeech_alignments'
 
     aligner = Features(root_dir=embeddings_dir, model_name=model_name, layer=layer, data_dir=alignments_dir, num_files=5)
