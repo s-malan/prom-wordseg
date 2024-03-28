@@ -9,6 +9,7 @@ Date: March 2024
 from wordseg import utils, segment, evaluate
 import argparse
 import json
+import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
 
@@ -23,11 +24,11 @@ def get_embeddings(data):
 
     Returns
     -------
-    sample : list
+    sample : numpy.ndarray
         List of file paths to the sampled embeddings
     embeddings : list
         List of embeddings loaded from the file paths
-    norm_embeddings : numpy.ndarray
+    norm_embeddings : list
         The normalized feature embeddings
     """
 
@@ -35,6 +36,28 @@ def get_embeddings(data):
     embeddings = data.load_embeddings(sample) # load the sampled embeddings
     norm_embeddings = data.normalize_features(embeddings) # normalize the sampled embeddings
 
+    print('before del', len(sample))
+    index_del = []
+    for i, embedding in enumerate(norm_embeddings):
+        if embedding.shape[0] == 1:
+            index_del.append(i)
+
+    if len(index_del) > 0:
+        check_index = np.random.randint(0, len(index_del))
+        alignments = data.get_alignment_paths(files=[sample[check_index]])
+        print('ex delete:', alignments[0])
+
+    for i in sorted(index_del, reverse=True):
+        del sample[i]
+        del embeddings[i]
+        del norm_embeddings[i]
+    
+    print('after del', len(sample))
+
+    if len(sample) == 0:
+        print('No embeddings to segment, sampled a file with only one frame.')
+        exit()
+    
     return sample, embeddings, norm_embeddings
 
 def get_word_segments(norm_embeddings, distance_type="euclidean", prominence=0.6, window_size=5):
@@ -110,19 +133,23 @@ if __name__ == "__main__":
         # ax.plot(np.range(segment.distances[0]), segment.distances[0] label='Distances', color='blue')
         ax.plot(segment.smoothed_distances[0], label='Smooth Distances', color='red', alpha=0.5)
         ax.scatter(peaks, segment.smoothed_distances[0][peaks], marker='x', label='Peaks', color='green')
-        
+
         alignment_end_times = data.alignment_data[0].end
         alignment_end_frames = [data.get_frame_num(end_time) for end_time in alignment_end_times]
         print('Segment end times, frames, and text')
+        print(data.alignment_data[0].dir, ', distance length:', len(segment.smoothed_distances[0]))
         print(alignment_end_times)
         print(alignment_end_frames)
         print(data.alignment_data[0].text)
 
         for frame in alignment_end_frames:
             ax.axvline(x=frame, label='Ground Truth', color='black', linewidth=0.5)
-        
+            ax.axvline(x=frame-1, color='black', linewidth=0.2, alpha=0.5)
+            ax.axvline(x=frame+1, color='black', linewidth=0.2, alpha=0.5)
+
         custom_ticks = alignment_end_frames
         custom_tick_labels = data.alignment_data[0].text
+        ax.set_xlim(xmin=0)
         ax.set_xticks(custom_ticks)
         ax.set_xticklabels(custom_tick_labels, rotation=90, fontsize=6)
 
@@ -158,6 +185,12 @@ if __name__ == "__main__":
         help="number of embeddings to sample (-1 to sample all available data).",
         type=int,
     )
+    parser.add_argument(
+        "--align_format",
+        help="extension of the alignment files (defaults to .TextGrid).",
+        default=".TextGrid",
+        type=str,
+    )
     parser.add_argument( # optional argument to load the optimized hyperparameters from a file
         '--load_hyperparams',
         action=argparse.BooleanOptionalAction
@@ -167,7 +200,8 @@ if __name__ == "__main__":
         action=argparse.BooleanOptionalAction
     )
 
-    args = parser.parse_args() #python3 extract_seg.py w2v2_hf 12 /media/hdd/embeddings /media/hdd/data/librispeech_alignments -1 --load_hyperparams --strict
+    args = parser.parse_args() #python3 extract_seg.py w2v2_hf 12 /media/hdd/embeddings/librispeech /media/hdd/data/librispeech_alignments -1 --load_hyperparams --strict
+    # python3 extract_seg.py w2v2_hf 12 /media/hdd/embeddings/buckeye/dev /media/hdd/data/buckeye_alignments/dev -1 --align_format=.txt --load_hyperparams --strict
     
     if not args.load_hyperparams: # ask for hyperparameters
         print("Enter the hyperparameters for the segmentation algorithm: ")
@@ -177,15 +211,18 @@ if __name__ == "__main__":
     else: #load from file
         with open('optimized_parameters.json') as json_file:
             params = json.load(json_file)
+            dataset_name = args.alignments_dir.stem
+            # params = params[dataset_name][args.model][str(args.layer)]
             params = params[args.model][str(args.layer)]
             dist = params['distance']
             window = params['window_size']
             prom = params['prominence']
     
-    data = utils.Features(root_dir=args.embeddings_dir, model_name=args.model, layer=args.layer, data_dir=args.alignments_dir, num_files=args.sample_size)
+    data = utils.Features(root_dir=args.embeddings_dir, model_name=args.model, layer=args.layer, data_dir=args.alignments_dir, alignment_format=args.align_format, num_files=args.sample_size)
 
     # Embeddings
     sample, embeddings, norm_embeddings = get_embeddings(data)
+    # print(sample, embeddings[0].shape)
     
     # Segmenting
     peaks, prominences, segmentor = get_word_segments(norm_embeddings, distance_type=dist, prominence=prom, window_size=window)
@@ -200,7 +237,7 @@ if __name__ == "__main__":
         alignment_frames = [data.get_frame_num(end_time) for end_time in alignment_times]
         alignment_end_frames.append(alignment_frames)
 
-    p, r, f = evaluate.eval_segmentation(peaks, alignment_end_frames, strict = args.strict)
+    p, r, f = evaluate.eval_segmentation(peaks, alignment_end_frames, strict=args.strict)
     rval = evaluate.get_rvalue(p, r)
     print('Evaluation: \n Precision: ', p, '\n Recall: ', r, '\n F1-Score: ', f, '\n R-Value: ', rval)
     

@@ -144,10 +144,16 @@ if __name__ == "__main__":
         help="number of embeddings to sample.",
         type=int,
     )
+    parser.add_argument(
+        "--align_format",
+        help="extension of the alignment files (defaults to .TextGrid).",
+        default=".TextGrid",
+        type=str,
+    )
 
     args = parser.parse_args() #python3 wordseg/segment.py w2v2_hf 12 /media/hdd/embeddings /media/hdd/data/librispeech_alignments 5
     
-    # data = utils.Features(root_dir=args.embeddings_dir, model_name=args.model, layer=args.layer, data_dir=args.alignments_dir, num_files=args.sample_size)
+    # data = utils.Features(root_dir=args.embeddings_dir, model_name=args.model, layer=args.layer, data_dir=args.alignments_dir, alignment_format=args.align_format, num_files=args.sample_size)
 
     # # Embeddings
     # sample = data.sample_embeddings() # sample from the feature embeddings

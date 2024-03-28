@@ -26,7 +26,7 @@ from transformers import HubertModel, AutoProcessor
 
 class EncodeAudio:
     def __init__(
-        self, model_name, data_dir, save_dir, extension #TODO add dataset argument (default librispeech)
+        self, model_name, data_dir, save_dir, extension
     ):
         self.model_name = model_name
         self.data_dir = data_dir
@@ -51,7 +51,7 @@ class EncodeAudio:
             self.model = models[0]
             self.model.eval()
         else: #hubert_shall
-            self.model = torch.hub.load("bshall/hubert:main", "hubert_soft", trust_repo=True).cuda()        
+            self.model = torch.hub.load("bshall/hubert:main", "hubert_soft", trust_repo=True).cuda() # hubert_discrete is same as fairseq, hubert_soft is Benji's own trained model (used for some diversity in models)
     
     def save_embedding(self, wav, file_path):
         """
@@ -92,12 +92,13 @@ class EncodeAudio:
         """
 
         layer = 12  # Change this to the desired layer index [0,12]
+        wav = F.pad(wav, ((400 - 320) // 2, (400 - 320) // 2))
 
         # Preprocess the input audio
         # input_values = self.processor(wav, return_tensors="pt", padding="longest").input_values
 
         # Forward pass through the modified model
-        with torch.no_grad():
+        with torch.inference_mode():
             x = self.model.forward(wav, output_hidden_states=True, output_attentions=False)
 
         x_layers = x[2][1:] # extract features for each layer
@@ -134,8 +135,9 @@ class EncodeAudio:
         """
 
         layer = 12  # Replace this with the desired layer number
+        wav = F.pad(wav, ((400 - 320) // 2, (400 - 320) // 2))
 
-        with torch.no_grad(): #https://github.com/facebookresearch/fairseq/blob/main/fairseq/models/wav2vec/wav2vec2.py#L795
+        with torch.inference_mode(): #https://github.com/facebookresearch/fairseq/blob/main/fairseq/models/wav2vec/wav2vec2.py#L795
             x = self.model.extract_features(wav, layer = layer, padding_mask = None)
         
         # extract features for each layer
@@ -181,9 +183,10 @@ class EncodeAudio:
 
         # Choose the nth layer you want to extract features from
         layer = 12  # Replace this with the desired layer number
+        wav = F.pad(wav, ((400 - 320) // 2, (400 - 320) // 2))
 
         # Forward pass through the model
-        with torch.no_grad():
+        with torch.inference_mode():
             x = self.model.forward(wav, output_hidden_states=True, output_attentions=False)
 
         x_layers = x[1] #all 12 layer features
@@ -220,9 +223,10 @@ class EncodeAudio:
         """
 
         layer = 12  # Replace this with the desired layer number
+        wav = F.pad(wav, ((400 - 320) // 2, (400 - 320) // 2))
 
         for i in range(layer):
-            with torch.no_grad(): #https://github.com/facebookresearch/fairseq/blob/main/fairseq/models/hubert/hubert.py
+            with torch.inference_mode(): #https://github.com/facebookresearch/fairseq/blob/main/fairseq/models/hubert/hubert.py
                 x, _ = self.model.extract_features(wav, output_layer = i)
 
             # out_path = (self.save_dir.joinpath(f'{self.model_name}',f'layer_{i+1}')) / file_path.relative_to(self.data_dir.parts[0])
@@ -279,9 +283,9 @@ class EncodeAudio:
             if not filenames: # no files in directory
                 continue
 
-            print('dirpath', dirpath)
-            print('dirnames', dirnames)
-            print('filenames', filenames)
+            # print('dirpath', dirpath)
+            # print('dirnames', dirnames)
+            # print('filenames', filenames)
             
             # not in root of dataset path
             if dirpath is not self.data_dir:
@@ -289,16 +293,16 @@ class EncodeAudio:
                 print('subdir', sub_dir)
 
                 # walk through files in directory
-                for file in filenames:
+                for file in tqdm(filenames):
                     if not file.endswith(self.extension): # ensure only audio files are processed
                         continue
 
                     file_path = os.path.join(dirpath, file)
-                    print('filepath', file_path)
+                    # print('filepath', file_path)
 
                     wav, sr = torchaudio.load(file_path, backend='soundfile')
                     assert sr == 16000
-
+                    
                     self.save_embedding(wav, Path(file_path))
 
 
@@ -332,14 +336,16 @@ if __name__ == "__main__":
                                #for hdd: python3 wordseg/encode.py w2v2_fs /media/hdd/data/librispeech/dev-clean/ /media/hdd/embeddings/
 
     # extract the audio from the dataset and save the embeddings
-    encoder = EncodeAudio(args.model, args.in_dir, args.out_dir, args.extension)
-    encoder.get_encodings()
+    args.in_dir = Path("/media/hdd/data/buckeye_segments/dev/")
+    args.out_dir = Path("/media/hdd/embeddings/buckeye/dev/")
 
-    # fire.Fire(
-    #     {
-    #         "encode_w2v2_hf": encode_w2v2_hf,
-    #         "encode_w2v2_fairseq": encode_w2v2_fairseq,
-    #         "encode_hubert_hf": encode_hubert_hf,
-    #         "encode_hubert_fairseq": encode_hubert_fairseq,
-    #     }
-    # )
+    for model in ["hubert_fs"]: #tqdm(["w2v2_hf", "w2v2_fs", "hubert_hf", "hubert_fs"]):
+        encoder = EncodeAudio(model, args.in_dir, args.out_dir, args.extension)
+        encoder.get_encodings()
+    
+    # args.in_dir = Path("/media/hdd/data/buckeye_segments/test/")
+    # args.out_dir = Path("/media/hdd/embeddings/buckeye/test/")
+
+    # for model in tqdm(["w2v2_hf", "w2v2_fs", "hubert_hf", "hubert_fs"]):
+    #     encoder = EncodeAudio(model, args.in_dir, args.out_dir, args.extension)
+    #     encoder.get_encodings()

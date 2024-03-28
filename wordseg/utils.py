@@ -9,11 +9,13 @@ Date: February 2024
 import numpy as np
 import torch
 import torchaudio
+import json
 from glob import glob
 import os
 from pathlib import Path
 import textgrids # https://pypi.org/project/praat-textgrids/
 from sklearn.preprocessing import StandardScaler # https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html
+import argparse
 
 class Alignment_Data:
     """
@@ -23,18 +25,18 @@ class Alignment_Data:
     ----------
     dir : String
         The path to the alignment data
+    alignment_format : String
+        Format of the alignment file ('TextGrid', 'txt')
     type : String
         The type of alignment to extract from the file (e.g. 'words', 'phones')
         default: 'words'
-    grid : TextGrid
-        Contains the alignment data
     """
     def __init__(
-        self, dir, type='words'
+        self, dir, alignment_format, type='words'
     ):
         self.dir = dir
+        self.alignment_format = alignment_format
         self.type = type
-        self.grid = textgrids.TextGrid(self.dir)
         self.text = []
         self.layer = []
         self.start = []
@@ -49,10 +51,19 @@ class Alignment_Data:
         self : Class
             The object containing all information of a specific alignment file
         """
-        for word in self.grid[self.type]:
-            self.text.append(word.text)
-            self.start.append(word.xmin)
-            self.end.append(word.xmax)
+
+        if self.alignment_format == '.TextGrid':
+            for word in textgrids.TextGrid(self.dir)[self.type]:
+                self.text.append(word.text)
+                self.start.append(word.xmin)
+                self.end.append(word.xmax)
+        elif self.alignment_format == '.txt':
+            with open(self.dir, 'r') as f:
+                for line in f:
+                    line = line.split()
+                    self.start.append(float(line[0])*0.01)
+                    self.end.append(float(line[1])*0.01)
+                    self.text.append(line[2])
     
     def __str__(self):
         return f"Alignment_Data({self.dir}, {self.text}, {self.start}, {self.end})"
@@ -71,6 +82,9 @@ class Features:
         The number of the layer to get the embeddings from
     data_dir : String
         The path to the root directory of the alignments
+    alignment_format : String
+        Format of the alignment files ('.TextGrid', '.txt')
+        default: '.TextGrid'
     num_files : int
         The number of embeddings (utterances) to sample
         default: 2000
@@ -82,12 +96,13 @@ class Features:
     """
 
     def __init__(
-        self, root_dir, model_name, layer, data_dir, num_files=2000, frames_per_ms=20
+        self, root_dir, model_name, layer, data_dir, alignment_format='.TextGrid', num_files=2000, frames_per_ms=20
     ):
         self.root_dir = root_dir
         self.model_name = model_name
         self.layer = layer
         self.data_dir = data_dir
+        self.alignment_format = alignment_format
         self.num_files = num_files
         self.frames_per_ms = frames_per_ms
         self.alignment_data = []
@@ -135,7 +150,11 @@ class Features:
         embeddings = []
 
         for file in files:
-            embeddings.append(torch.from_numpy(np.load(file)))
+            embedding = torch.from_numpy(np.load(file))
+            if len(embedding.shape) == 1: # if only one dimension, add a dimension
+                embeddings.append(embedding.unsqueeze(0))
+            else:
+                embeddings.append(embedding)
         return embeddings
     
     def normalize_features(self, features): # Works
@@ -154,7 +173,7 @@ class Features:
         normalized_features : numpy.ndarray
             The normalized feature embeddings
         """
-        
+
         stacked_features = torch.cat(features, dim=0) # concatenate all features into one tensor with size (sum_seq_len, feature_dim (channels))
 
         scaler = StandardScaler()
@@ -183,12 +202,16 @@ class Features:
 
         alignments = []
 
-        for file in files:
-            sub_dir = file.split("/")[-4:]
-            align_dir = os.path.join(self.data_dir, *sub_dir)
+        for file in files: # TODO make this work better, the -4 is a hack
+            if self.alignment_format == '.TextGrid':
+                sub_dir = file.split("/")[-4:]
+                align_dir = os.path.join(self.data_dir, *sub_dir)
+            elif self.alignment_format == '.txt':
+                sub_dir = file.split("/")[-1]
+                align_dir = os.path.join(self.data_dir, sub_dir)
             
-            if os.path.exists(Path(align_dir).with_suffix(".TextGrid")):
-                alignments.append(Path(align_dir).with_suffix(".TextGrid"))
+            if os.path.exists(Path(align_dir).with_suffix(self.alignment_format)):
+                alignments.append(Path(align_dir).with_suffix(self.alignment_format))
 
         return alignments
     
@@ -205,13 +228,13 @@ class Features:
         """
             
         for file in files:
-            alignment = Alignment_Data(file, type='words')
+            alignment = Alignment_Data(file, self.alignment_format, type='words')
             alignment.set_attributes()
             self.alignment_data.append(alignment)
 
     def get_frame_num(self, seconds): # Works
         """
-        Find Paths to the TextGrid files (alignments) corresponding to the sampled embeddings
+        Convert seconds to feature embedding frame number
 
         Parameters
         ----------
@@ -230,7 +253,7 @@ class Features:
 
     def get_sample_second(self, frame_num): # Works
         """
-        Find Paths to the TextGrid files (alignments) corresponding to the sampled embeddings
+        Convert feature embedding frame number to seconds
 
         Parameters
         ----------
@@ -246,21 +269,23 @@ class Features:
         """
 
         return frame_num * self.frames_per_ms / 1000 # frame_num * 20ms per frame / 1000ms per second
-
+    
 if __name__ == "__main__":
-    x = torch.from_numpy(np.load('/media/hdd/embeddings/w2v2_fs/layer_1/librispeech/dev-clean/84/121123/84-121123-0000.npy'))
-    print(x, x.shape)
-    y = torchaudio.load('/media/hdd/data/librispeech/dev-clean/84/121123/84-121123-0000.flac')
-    print(y[0].shape)
-
     # Example usage
-    embeddings_dir = '/media/hdd/embeddings'
+    embeddings_dir = '/media/hdd/embeddings/librispeech'
+    alignments_dir = '/media/hdd/data/librispeech_alignments'
+    format = '.TextGrid'
+
+    embeddings_dir = '/media/hdd/embeddings/buckeye/dev/'
+    alignments_dir = '/media/hdd/data/buckeye_alignments/dev/'
+    format = '.txt'
+
     model_name = 'w2v2_hf'
     layer = 1
-    alignments_dir = '/media/hdd/data/librispeech_alignments'
 
-    aligner = Features(root_dir=embeddings_dir, model_name=model_name, layer=layer, data_dir=alignments_dir, num_files=5)
+    aligner = Features(root_dir=embeddings_dir, model_name=model_name, layer=layer, data_dir=alignments_dir, alignment_format=format, num_files=1)
     sample = aligner.sample_embeddings()
+    sample = ['/media/hdd/embeddings/buckeye/dev/w2v2_hf/layer_12/data/buckeye_segments/dev/s18_01b_043186-043202.npy'] # Test
     print(sample)
 
     alignments = aligner.get_alignment_paths(files=sample)
@@ -270,19 +295,13 @@ if __name__ == "__main__":
     print(aligner.alignment_data[0])
 
     embeddings = aligner.load_embeddings(sample)
-    # print(embeddings)
-    # print(embeddings[0].shape)
-    # print(embeddings[0][:,0].shape)
-
-    print(torch.max(torch.mean(torch.cat(embeddings, dim=0), dim=0)))
-    print(torch.max(torch.std(torch.cat(embeddings, dim=0), dim=0)))
+    print(embeddings[0].shape)
 
     norm_embeddings = aligner.normalize_features(embeddings)
-    # print(norm_embeddings[0])
-    # print(norm_embeddings[0].shape)
+    print(norm_embeddings[0].shape)
 
     # check if the channels are normalized separately (get mean over each 768 channels for each sample)
-    mean = torch.mean(torch.cat(norm_embeddings, dim=0), dim=0)
-    std = torch.std(torch.cat(norm_embeddings, dim=0), axis=0)
-    print(torch.max(mean))
-    print(torch.max(std))
+    # mean = torch.mean(torch.cat(norm_embeddings, dim=0), dim=0)
+    # std = torch.std(torch.cat(norm_embeddings, dim=0), axis=0)
+    # print(torch.max(mean))
+    # print(torch.max(std))

@@ -6,8 +6,6 @@ Contact: 24227013@sun.ac.za
 Date: March 2024
 """
 
-# TODO: NED, UWER
-
 import numpy as np
 
 def eval_segmentation(seg, ref, strict=True, tolerance=1):
@@ -33,26 +31,20 @@ def eval_segmentation(seg, ref, strict=True, tolerance=1):
     num_seg = 0 #Nf
     num_ref = 0 #Nref
     num_hit = 0 #Nhit
-        
+    
     assert len(seg) == len(ref) # Check if the number of utterances in the hypothesis and reference are the same
-    for i_utterance in range(len(seg)):
-        prediction = seg[i_utterance] # TODO remove last boundaty of prediction
+    for i_utterance in range(len(seg)): # for each utterance
+        prediction = seg[i_utterance]
         ground_truth = ref[i_utterance]
-        ground_truth = ground_truth[:-1] # Remove the last boundary of the reference
 
-        # HERMAN DOES
-        # If lengths are the same, disregard last True reference boundary OF THE PREDICTED BOUNDARIES
-        # if len(boundary_PRED) == len(boundary_GT):
-        #     boundary_PRED = boundary_PRED[:-1] # PRED
-        #     # boundary_GT = boundary_GT[:-1]
-        
-        # boundary_GT = seg[i_boundary][:-1]  # last boundary is always True, # GT
-        #                                      # don't want to count this
+        # TODO should I do the below?
+        if len(prediction) > 0 and abs(prediction[-1] - ground_truth[-1]) <= tolerance: # if the last boundary is within the tolerance, delete it since it would have hit
+            prediction = prediction[:-1]
+            # print('del prediction boundary if it would hit last boundary:', len(prediction))
 
-        # # If reference is longer, truncate
-        # if len(boundary_PRED) > len(boundary_GT):
-        #     boundary_PRED = boundary_PRED[:len(boundary_GT)]
-        # HERMAN ENDS
+        # TODO should I do the if statement below?
+        # if len(ground_truth) > 1: # if there is more than one boundary in the reference TODO this will then be redundant if above todo is implemented
+        ground_truth = ground_truth[:-1] # Remove the last boundary of the reference if there is more than one boundary
 
         num_seg += len(prediction)
         num_ref += len(ground_truth)
@@ -65,6 +57,9 @@ def eval_segmentation(seg, ref, strict=True, tolerance=1):
                     if strict: break # makes the evaluation strict, so that a reference boundary can only be hit once
 
     # Calculate metrics:
+    if num_seg == num_ref == 0:
+        return 0, 0, -np.inf
+    
     precision = float(num_hit/num_seg)
     recall = float(num_hit/num_ref)
     if precision + recall != 0:
