@@ -18,9 +18,8 @@ Reference paper: [TTI Paper](https://arxiv.org/abs/2307.00162)
 
 ## Datasets
 
-- [LibriSpeech](https://www.openslr.org/12) Corpus (Dev-Clean split)
-- Buckeye
-- ZeroSpeech 20__
+- [LibriSpeech](https://www.openslr.org/12) Corpus (Dev-Clean split) with alignments found [here](https://zenodo.org/records/2619474).
+- [Buckeye](https://buckeyecorpus.osu.edu/) Corpus with splits found [here](https://github.com/kamperh/vqwordseg?tab=readme-ov-file#about-the-buckeye-data-splits) and alignments found [here](https://github.com/kamperh/vqwordseg/releases/tag/v1.0).
 
 ## Example Usage
 
@@ -112,6 +111,16 @@ Results for each model's best performing layer evaluated on each dataset.
       R-value: 53.24%
     ---------------------------------------------------------------------------
 
+##### melspec
+
+    ---------------------------------------------------------------------------
+    Word boundaries:
+    Precision: 27.36%
+    Recall: 24.73%
+    F1-score: 25.97%
+    R-value: 38.84%
+    ---------------------------------------------------------------------------
+
 ### BuckEye (Val/Dev)
 
 #### wav2vec2.0
@@ -176,6 +185,16 @@ Results for each model's best performing layer evaluated on each dataset.
       R-value: 50.63%
     ---------------------------------------------------------------------------
 
+##### melspec
+
+    ---------------------------------------------------------------------------
+    Word boundaries:
+    Precision: 26.71%
+    Recall: 23.96%
+    F1-score: 25.26%
+    R-value: 38.39%
+    ---------------------------------------------------------------------------
+
 ### BuckEye (Test)
 
 #### wav2vec2.0
@@ -238,6 +257,16 @@ Results for each model's best performing layer evaluated on each dataset.
       Recall: 34.29%
       F1-score: 39.76%
       R-value: 50.88%
+    ---------------------------------------------------------------------------
+
+##### melspec
+
+    ---------------------------------------------------------------------------
+    Word boundaries:
+    Precision: 25.83%
+    Recall: 23.47%
+    F1-score: 24.59%
+    R-value: 37.64%
     ---------------------------------------------------------------------------
 
 <!-- #### Notes
