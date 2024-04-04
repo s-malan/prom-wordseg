@@ -115,10 +115,10 @@ Results for each model's best performing layer evaluated on each dataset.
 
     ---------------------------------------------------------------------------
     Word boundaries:
-    Precision: 27.36%
-    Recall: 24.73%
-    F1-score: 25.97%
-    R-value: 38.84%
+    Precision: 27.48%
+    Recall: 24.85%
+    F1-score: 26.10%
+    R-value: 38.94%
     ---------------------------------------------------------------------------
 
 ### BuckEye (Val/Dev)
