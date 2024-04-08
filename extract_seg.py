@@ -9,7 +9,6 @@ Date: March 2024
 from wordseg import utils, segment, evaluate
 import argparse
 import json
-import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
 
@@ -36,24 +35,16 @@ def get_embeddings(data):
     embeddings = data.load_embeddings(sample) # load the sampled embeddings
     norm_embeddings = data.normalize_features(embeddings) # normalize the sampled embeddings
 
-    print('before del', len(sample))
     index_del = []
-    for i, embedding in enumerate(norm_embeddings):
+    for i, embedding in enumerate(norm_embeddings): # delete embeddings with only one frame
         if embedding.shape[0] == 1:
             index_del.append(i)
-
-    if len(index_del) > 0:
-        check_index = np.random.randint(0, len(index_del))
-        alignments = data.get_alignment_paths(files=[sample[check_index]])
-        print('ex delete:', alignments[0])
 
     for i in sorted(index_del, reverse=True):
         del sample[i]
         del embeddings[i]
         del norm_embeddings[i]
     
-    print('after del', len(sample))
-
     if len(sample) == 0:
         print('No embeddings to segment, sampled a file with only one frame.')
         exit()
@@ -128,7 +119,7 @@ if __name__ == "__main__":
 
         peaks = peaks[0]
         
-        fig, ax = plt.subplots()
+        _, ax = plt.subplots()
         ax.plot(segment.distances[0], label='Distances', color='blue', alpha=0.5)
         # ax.plot(np.range(segment.distances[0]), segment.distances[0] label='Distances', color='blue')
         ax.plot(segment.smoothed_distances[0], label='Smooth Distances', color='red', alpha=0.5)
@@ -137,7 +128,6 @@ if __name__ == "__main__":
         alignment_end_times = data.alignment_data[0].end
         alignment_end_frames = [data.get_frame_num(end_time) for end_time in alignment_end_times]
         print('Segment end times, frames, and text')
-        print(data.alignment_data[0].dir, ', distance length:', len(segment.smoothed_distances[0]))
         print(alignment_end_times)
         print(alignment_end_frames)
         print(data.alignment_data[0].text)
@@ -159,12 +149,11 @@ if __name__ == "__main__":
     parser.add_argument(
         "model",
         help="available models (wav2vec2.0: HuggingFace, fairseq, hubert: HuggingFace, fairseq, hubert:main)",
-        choices=["w2v2_hf", "w2v2_fs", "hubert_hf", "hubert_fs", "hubert_shall"],
+        choices=["w2v2_hf", "w2v2_fs", "hubert_hf", "hubert_fs", "hubert_shall", "melspec"],
         default="w2v2_hf",
     )
     parser.add_argument(
-        "layer",
-        help="available models (wav2vec2.0: HuggingFace, fairseq, hubert: HuggingFace, fairseq, hubert:main)",
+        "layer", # -1 for no layer
         type=int,
     )
     parser.add_argument(
@@ -212,8 +201,10 @@ if __name__ == "__main__":
         with open('optimized_parameters.json') as json_file:
             params = json.load(json_file)
             dataset_name = args.alignments_dir.stem
-            # params = params[dataset_name][args.model][str(args.layer)]
-            params = params[args.model][str(args.layer)]
+            if args.layer != -1:
+                params = params[args.model][str(args.layer)]
+            else:
+                params = params[args.model]
             dist = params['distance']
             window = params['window_size']
             prom = params['prominence']
@@ -222,7 +213,6 @@ if __name__ == "__main__":
 
     # Embeddings
     sample, embeddings, norm_embeddings = get_embeddings(data)
-    # print(sample, embeddings[0].shape)
     
     # Segmenting
     peaks, prominences, segmentor = get_word_segments(norm_embeddings, distance_type=dist, prominence=prom, window_size=window)

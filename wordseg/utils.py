@@ -8,14 +8,11 @@ Date: February 2024
 
 import numpy as np
 import torch
-import torchaudio
-import json
 from glob import glob
 import os
 from pathlib import Path
 import textgrids # https://pypi.org/project/praat-textgrids/
 from sklearn.preprocessing import StandardScaler # https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html
-import argparse
 
 class Alignment_Data:
     """
@@ -122,8 +119,12 @@ class Features:
             List of file paths to the sampled embeddings
         """
 
-        layer = 'layer_' + str(self.layer)
-        all_embeddings = glob(os.path.join(self.root_dir, self.model_name, layer, "**/*.npy"), recursive=True)
+        if self.layer != -1:
+            layer = 'layer_' + str(self.layer)
+            all_embeddings = glob(os.path.join(self.root_dir, self.model_name, layer, "**/*.npy"), recursive=True)
+        else:
+            all_embeddings = glob(os.path.join(self.root_dir, self.model_name, "**/*.npy"), recursive=True)
+
         if self.num_files == -1: # sample all the data
             return all_embeddings
         
@@ -269,39 +270,3 @@ class Features:
         """
 
         return frame_num * self.frames_per_ms / 1000 # frame_num * 20ms per frame / 1000ms per second
-    
-if __name__ == "__main__":
-    # Example usage
-    embeddings_dir = '/media/hdd/embeddings/librispeech'
-    alignments_dir = '/media/hdd/data/librispeech_alignments'
-    format = '.TextGrid'
-
-    embeddings_dir = '/media/hdd/embeddings/buckeye/dev/'
-    alignments_dir = '/media/hdd/data/buckeye_alignments/dev/'
-    format = '.txt'
-
-    model_name = 'w2v2_hf'
-    layer = 1
-
-    aligner = Features(root_dir=embeddings_dir, model_name=model_name, layer=layer, data_dir=alignments_dir, alignment_format=format, num_files=1)
-    sample = aligner.sample_embeddings()
-    sample = ['/media/hdd/embeddings/buckeye/dev/w2v2_hf/layer_12/data/buckeye_segments/dev/s18_01b_043186-043202.npy'] # Test
-    print(sample)
-
-    alignments = aligner.get_alignment_paths(files=sample)
-    print(alignments)
-
-    aligner.set_alignments(files=alignments)
-    print(aligner.alignment_data[0])
-
-    embeddings = aligner.load_embeddings(sample)
-    print(embeddings[0].shape)
-
-    norm_embeddings = aligner.normalize_features(embeddings)
-    print(norm_embeddings[0].shape)
-
-    # check if the channels are normalized separately (get mean over each 768 channels for each sample)
-    # mean = torch.mean(torch.cat(norm_embeddings, dim=0), dim=0)
-    # std = torch.std(torch.cat(norm_embeddings, dim=0), axis=0)
-    # print(torch.max(mean))
-    # print(torch.max(std))

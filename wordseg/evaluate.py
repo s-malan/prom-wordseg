@@ -1,8 +1,8 @@
 """
 Funtions used to evaluate word segmentation algorithm.
 
-Author: Simon Malan
-Contact: 24227013@sun.ac.za
+Author: Herman Kamper, Simon Malan
+Contact: kamperh@gmail.com, 24227013@sun.ac.za
 Date: March 2024
 """
 
@@ -37,31 +37,37 @@ def eval_segmentation(seg, ref, strict=True, tolerance=1):
         prediction = seg[i_utterance]
         ground_truth = ref[i_utterance]
 
-        # TODO should I do the below?
         if len(prediction) > 0 and abs(prediction[-1] - ground_truth[-1]) <= tolerance: # if the last boundary is within the tolerance, delete it since it would have hit
             prediction = prediction[:-1]
-            # print('del prediction boundary if it would hit last boundary:', len(prediction))
 
-        # TODO should I do the if statement below?
-        # if len(ground_truth) > 1: # if there is more than one boundary in the reference TODO this will then be redundant if above todo is implemented
         ground_truth = ground_truth[:-1] # Remove the last boundary of the reference if there is more than one boundary
 
         num_seg += len(prediction)
         num_ref += len(ground_truth)
 
         # count the number of hits
-        for i_ref in ground_truth: # TODO check, multiple ref can still hit on a single seg
+        for i_ref in ground_truth: # multiple ref can still hit on a single seg
             for i_seg in prediction:
                 if abs(i_ref - i_seg) <= tolerance:
                     num_hit += 1
                     if strict: break # makes the evaluation strict, so that a reference boundary can only be hit once
 
-    # Calculate metrics:
+    # Calculate metrics, avoid division by zero:
     if num_seg == num_ref == 0:
         return 0, 0, -np.inf
+    elif num_hit == 0:
+        return 0, 0, 0
     
-    precision = float(num_hit/num_seg)
-    recall = float(num_hit/num_ref)
+    if num_seg != 0:
+        precision = float(num_hit/num_seg)
+    else:
+        precision = np.inf
+    
+    if num_ref != 0:
+        recall = float(num_hit/num_ref)
+    else:
+        recall = np.inf
+    
     if precision + recall != 0:
         f1_score = 2*precision*recall/(precision+recall)
     else:

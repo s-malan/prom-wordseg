@@ -1,0 +1,439 @@
+{
+    "w2v2_hf": {
+        "1": {
+            "distance": "euclidean",
+            "window_size": 6,
+            "prominence": 0.4,
+            "f1": 0.2667985088197854,
+            "rval": 0.3996510263453932
+        },
+        "2": {
+            "distance": "euclidean",
+            "window_size": 6,
+            "prominence": 0.4,
+            "f1": 0.2672655936510767,
+            "rval": 0.39527637388096426
+        },
+        "3": {
+            "distance": "euclidean",
+            "window_size": 4,
+            "prominence": 0.8,
+            "f1": 0.2560630308999139,
+            "rval": 0.38687365215121894
+        },
+        "4": {
+            "distance": "cosine",
+            "window_size": 4,
+            "prominence": 0.5,
+            "f1": 0.29537335540646503,
+            "rval": 0.40622506621206644
+        },
+        "5": {
+            "distance": "cosine",
+            "window_size": 4,
+            "prominence": 0.4,
+            "f1": 0.3678419178494408,
+            "rval": 0.43086753855703186
+        },
+        "6": {
+            "distance": "cosine",
+            "window_size": 4,
+            "prominence": 0.5,
+            "f1": 0.4201190121375936,
+            "rval": 0.4915780547442684
+        },
+        "7": {
+            "distance": "cosine",
+            "window_size": 4,
+            "prominence": 0.6,
+            "f1": 0.43444398167430237,
+            "rval": 0.5115072368763567
+        },
+        "8": {
+            "distance": "cosine",
+            "window_size": 4,
+            "prominence": 0.5,
+            "f1": 0.42114660795990627,
+            "rval": 0.4832743512955302
+        },
+        "9": {
+            "distance": "cosine",
+            "window_size": 4,
+            "prominence": 0.5,
+            "f1": 0.38590600415415577,
+            "rval": 0.4815983646637878
+        },
+        "10": {
+            "distance": "cosine",
+            "window_size": 6,
+            "prominence": 0.3,
+            "f1": 0.2713585724963518,
+            "rval": 0.4133947587632736
+        },
+        "11": {
+            "distance": "cosine",
+            "window_size": 6,
+            "prominence": 0.5,
+            "f1": 0.2110175080571905,
+            "rval": 0.3770428530567349
+        },
+        "12": {
+            "distance": "cosine",
+            "window_size": 7,
+            "prominence": 0.3,
+            "f1": 0.1678491604103387,
+            "rval": 0.31685695603669295
+        }
+    },
+    "w2v2_fs": {
+        "1": {
+            "distance": "euclidean",
+            "window_size": 7,
+            "prominence": 0.3,
+            "f1": 0.27483111192258536,
+            "rval": 0.4071949125873985
+        },
+        "2": {
+            "distance": "euclidean",
+            "window_size": 6,
+            "prominence": 0.4,
+            "f1": 0.2743330930064888,
+            "rval": 0.4013670108622317
+        },
+        "3": {
+            "distance": "euclidean",
+            "window_size": 4,
+            "prominence": 0.8,
+            "f1": 0.2758937989541486,
+            "rval": 0.39962408700053564
+        },
+        "4": {
+            "distance": "euclidean",
+            "window_size": 4,
+            "prominence": 0.7,
+            "f1": 0.3163863038528703,
+            "rval": 0.4302326167074948
+        },
+        "5": {
+            "distance": "euclidean",
+            "window_size": 4,
+            "prominence": 0.7,
+            "f1": 0.36348174959661594,
+            "rval": 0.46200683346803195
+        },
+        "6": {
+            "distance": "cosine",
+            "window_size": 4,
+            "prominence": 0.5,
+            "f1": 0.41444752981600974,
+            "rval": 0.47604307744217467
+        },
+        "7": {
+            "distance": "cosine",
+            "window_size": 4,
+            "prominence": 0.5,
+            "f1": 0.43742255266418834,
+            "rval": 0.4798501398787669
+        },
+        "8": {
+            "distance": "euclidean",
+            "window_size": 4,
+            "prominence": 0.7,
+            "f1": 0.40797704622185277,
+            "rval": 0.4744118011164876
+        },
+        "9": {
+            "distance": "euclidean",
+            "window_size": 4,
+            "prominence": 0.7,
+            "f1": 0.3300721801895817,
+            "rval": 0.43847683281149297
+        },
+        "10": {
+            "distance": "euclidean",
+            "window_size": 5,
+            "prominence": 0.6,
+            "f1": 0.2786666514614147,
+            "rval": 0.4102449686125281
+        },
+        "11": {
+            "distance": "euclidean",
+            "window_size": 4,
+            "prominence": 0.8,
+            "f1": 0.31203411347286875,
+            "rval": 0.41593046795687505
+        },
+        "12": {
+            "distance": "euclidean",
+            "window_size": 4,
+            "prominence": 0.8,
+            "f1": 0.2864708079720495,
+            "rval": 0.401067995111247
+        }
+    },
+    "hubert_hf": {
+        "1": {
+            "distance": "cosine",
+            "window_size": 7,
+            "prominence": 0.2,
+            "f1": 0.27575359850744646,
+            "rval": 0.39146114850354197
+        },
+        "2": {
+            "distance": "euclidean",
+            "window_size": 7,
+            "prominence": 0.2,
+            "f1": 0.2643766970573302,
+            "rval": 0.3797945005695136
+        },
+        "3": {
+            "distance": "euclidean",
+            "window_size": 6,
+            "prominence": 0.3,
+            "f1": 0.28594921507319127,
+            "rval": 0.4013068764512806
+        },
+        "4": {
+            "distance": "euclidean",
+            "window_size": 6,
+            "prominence": 0.4,
+            "f1": 0.28247496176710707,
+            "rval": 0.41294299550321445
+        },
+        "5": {
+            "distance": "euclidean",
+            "window_size": 6,
+            "prominence": 0.4,
+            "f1": 0.27958285052143683,
+            "rval": 0.41136696265839023
+        },
+        "6": {
+            "distance": "cosine",
+            "window_size": 4,
+            "prominence": 0.6,
+            "f1": 0.2945094346045182,
+            "rval": 0.4172703376218496
+        },
+        "7": {
+            "distance": "cosine",
+            "window_size": 4,
+            "prominence": 0.5,
+            "f1": 0.3638989480944991,
+            "rval": 0.46170422884080364
+        },
+        "8": {
+            "distance": "cosine",
+            "window_size": 4,
+            "prominence": 0.6,
+            "f1": 0.39729079991657246,
+            "rval": 0.4940441897938044
+        },
+        "9": {
+            "distance": "cosine",
+            "window_size": 4,
+            "prominence": 0.6,
+            "f1": 0.45402499333100776,
+            "rval": 0.5192336417985953
+        },
+        "10": {
+            "distance": "cosine",
+            "window_size": 4,
+            "prominence": 0.7,
+            "f1": 0.4472659660801052,
+            "rval": 0.5178247835695642
+        },
+        "11": {
+            "distance": "cosine",
+            "window_size": 4,
+            "prominence": 0.7,
+            "f1": 0.4174739417030166,
+            "rval": 0.5060791052608342
+        },
+        "12": {
+            "distance": "cosine",
+            "window_size": 4,
+            "prominence": 0.7,
+            "f1": 0.3445355796940811,
+            "rval": 0.4536955457213847
+        }
+    },
+    "hubert_fs": {
+        "1": {
+            "distance": "cosine",
+            "window_size": 4,
+            "prominence": 0.8,
+            "f1": 0.3061662322083554,
+            "rval": 0.4316770137655883
+        },
+        "2": {
+            "distance": "euclidean",
+            "window_size": 7,
+            "prominence": 0.2,
+            "f1": 0.26518414344730595,
+            "rval": 0.3799831182425415
+        },
+        "3": {
+            "distance": "euclidean",
+            "window_size": 6,
+            "prominence": 0.3,
+            "f1": 0.286416124751889,
+            "rval": 0.40072564765011154
+        },
+        "4": {
+            "distance": "euclidean",
+            "window_size": 6,
+            "prominence": 0.4,
+            "f1": 0.2837218341659712,
+            "rval": 0.4145970968730318
+        },
+        "5": {
+            "distance": "euclidean",
+            "window_size": 6,
+            "prominence": 0.4,
+            "f1": 0.28136393863652,
+            "rval": 0.4126725359938421
+        },
+        "6": {
+            "distance": "cosine",
+            "window_size": 4,
+            "prominence": 0.6,
+            "f1": 0.29562449924330103,
+            "rval": 0.41831283811027675
+        },
+        "7": {
+            "distance": "cosine",
+            "window_size": 4,
+            "prominence": 0.5,
+            "f1": 0.3621911143357091,
+            "rval": 0.4604453400682489
+        },
+        "8": {
+            "distance": "cosine",
+            "window_size": 4,
+            "prominence": 0.6,
+            "f1": 0.3982533900908413,
+            "rval": 0.4945331403985863
+        },
+        "9": {
+            "distance": "cosine",
+            "window_size": 4,
+            "prominence": 0.6,
+            "f1": 0.4521074363272148,
+            "rval": 0.5174209773290781
+        },
+        "10": {
+            "distance": "cosine",
+            "window_size": 4,
+            "prominence": 0.7,
+            "f1": 0.4463399791651625,
+            "rval": 0.5172729770173753
+        },
+        "11": {
+            "distance": "cosine",
+            "window_size": 4,
+            "prominence": 0.7,
+            "f1": 0.41534915430315233,
+            "rval": 0.5040314837738893
+        },
+        "12": {
+            "distance": "cosine",
+            "window_size": 4,
+            "prominence": 0.7,
+            "f1": 0.34309688619822387,
+            "rval": 0.45314106226964435
+        }
+    },
+    "hubert_shall": {
+        "1": {
+            "distance": "cosine",
+            "window_size": 7,
+            "prominence": 0.2,
+            "f1": 0.2774973562854994,
+            "rval": 0.3923222060980992
+        },
+        "2": {
+            "distance": "euclidean",
+            "window_size": 7,
+            "prominence": 0.2,
+            "f1": 0.27086505339769135,
+            "rval": 0.3838283745387626
+        },
+        "3": {
+            "distance": "euclidean",
+            "window_size": 7,
+            "prominence": 0.3,
+            "f1": 0.2710281456761799,
+            "rval": 0.40641521185050467
+        },
+        "4": {
+            "distance": "euclidean",
+            "window_size": 7,
+            "prominence": 0.3,
+            "f1": 0.2781294112289968,
+            "rval": 0.409597027143041
+        },
+        "5": {
+            "distance": "euclidean",
+            "window_size": 5,
+            "prominence": 0.5,
+            "f1": 0.28457693438581416,
+            "rval": 0.40636686912604936
+        },
+        "6": {
+            "distance": "cosine",
+            "window_size": 3,
+            "prominence": 0.9,
+            "f1": 0.2960700034338626,
+            "rval": 0.4268305760764558
+        },
+        "7": {
+            "distance": "cosine",
+            "window_size": 3,
+            "prominence": 0.7,
+            "f1": 0.36444795402450125,
+            "rval": 0.46271728991038197
+        },
+        "8": {
+            "distance": "cosine",
+            "window_size": 5,
+            "prominence": 0.4,
+            "f1": 0.40659389225261855,
+            "rval": 0.5029913568779278
+        },
+        "9": {
+            "distance": "cosine",
+            "window_size": 5,
+            "prominence": 0.4,
+            "f1": 0.45378399476760134,
+            "rval": 0.5264656289077977
+        },
+        "10": {
+            "distance": "cosine",
+            "window_size": 5,
+            "prominence": 0.5,
+            "f1": 0.448957696310363,
+            "rval": 0.5305396096005408
+        },
+        "11": {
+            "distance": "cosine",
+            "window_size": 5,
+            "prominence": 0.4,
+            "f1": 0.44561651494214066,
+            "rval": 0.5159669425842077
+        },
+        "12": {
+            "distance": "cosine",
+            "window_size": 5,
+            "prominence": 0.4,
+            "f1": 0.3738465481886535,
+            "rval": 0.4651195509873919
+        }
+    },
+    "melspec": {
+        "distance": "cosine",
+        "window_size": 6,
+        "prominence": 0.3,
+        "f1": 0.2602259094098739, 
+        "rval": 0.38849333010953524
+    }
+}

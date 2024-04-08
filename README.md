@@ -29,19 +29,19 @@ All scripts to be run from the root directory.
 
     python3 wordseg/encode.py model_name path/to/audio/root path/to/embeddings/save/root --extension=.flac
 
-  The model_name can be one of: w2v2_fs, w2v2_hf, hubert_fs, hubert_hf, hubert_shall. The optional extension argument is the extension of the audio files to be processed.
+  The model_name can be one of: w2v2_fs, w2v2_hf, hubert_fs, hubert_hf, hubert_shall, melspec. The optional extension argument is the extension of the audio files to be processed.
 
   2. Optimize hyperparameters for the word segmentation algorithm:
 
-    python3 wordseg/optimize.py path/to/embeddings/root path/to/audio/alignments/root num_samples --strict=True
+    python3 wordseg/optimize.py path/to/embeddings/root path/to/audio/alignments/root num_samples --strict=True --melspec=True
 
-  The num_samples argument can be set to -1 to sample all the possible audio files in the directory provided. The optional strict argument determines if the word boundary hit count is strict or lenient as decribed by D. Harwath in [this](https://ieeexplore.ieee.org/abstract/document/10022827) paper.
+  The num_samples argument can be set to -1 to sample all the possible audio files in the directory provided. The optional strict argument determines if the word boundary hit count is strict or lenient as decribed by D. Harwath in [this](https://ieeexplore.ieee.org/abstract/document/10022827) paper. The optional melspec argument additionally optimizes melspec features.
 
   3. Run the word segmentation algorithm
 
-    python3 extract_seg.py model_name layer_num path/to/embeddings/root path/to/audio/alignments/root num_samples num_samples --load_hyperparams=True --strict=True
+    python3 extract_seg.py model_name layer_num path/to/embeddings/root path/to/audio/alignments/root num_samples num_samples --align_format=.TextGrid --load_hyperparams=True --strict=True
 
-  The model_name is defined as in 1. The layer_num is a valid layer in the specified model (for wav2vec2 and HuBERT this number is in the range [1,12]). The num_samples argument is defined as in 2. The optional load_hyperparams argument loads the saved hyperparameters from 2. and otherwise prompts the user to provide hyperparameter values. The optional strict argument is defined as in 3.
+  The model_name is defined as in 1. The layer_num is a valid layer in the specified model (for wav2vec2 and HuBERT this number is in the range [1,12]), for melspec this value must be -1. The num_samples argument is defined as in 2. The optional align_format argument specifies the extension type of the alignment files. The optional load_hyperparams argument loads the saved hyperparameters from 2. and otherwise prompts the user to provide hyperparameter values. The optional strict argument is defined as in 3.
 
 ## Results
 
@@ -55,20 +55,20 @@ Results for each model's best performing layer evaluated on each dataset.
 
     ---------------------------------------------------------------------------
     Word boundaries:
-    Precision: 40.65%
-    Recall: 47.37%
-    F1-score: 43.75%
-    R-value: 47.96%
+    Precision: 40.85%
+    Recall: 47.73%
+    F1-score: 44.02%
+    R-value: 48.10%
     ---------------------------------------------------------------------------
 
 ##### HuggingFace (layer 7)
 
     ---------------------------------------------------------------------------
     Word boundaries:
-    Precision: 42.74%
-    Recall: 43.99%
-    F1-score: 43.36%
-    R-value: 51.12%
+    Precision: 42.93%
+    Recall: 44.26%
+    F1-score: 43.58%
+    R-value: 51.28%
     ---------------------------------------------------------------------------
 
 #### HuBERT
@@ -77,20 +77,20 @@ Results for each model's best performing layer evaluated on each dataset.
 
     ---------------------------------------------------------------------------
     Word boundaries:
-    Precision: 43.75%
-    Recall: 47.08%
-    F1-score: 45.36%
-    R-value: 51.87%
+    Precision: 45.29%
+    Recall: 44.66%
+    F1-score: 44.97%
+    R-value: 53.25%
     ---------------------------------------------------------------------------
 
 ##### HuggingFace (layer 9)
 
     ---------------------------------------------------------------------------
     Word boundaries:
-    Precision: 43.75%
-    Recall: 47.08%
-    F1-score: 45.36%
-    R-value: 51.87%
+    Precision: 45.29%
+    Recall: 44.66%
+    F1-score: 44.97%
+    R-value: 53.25%
     ---------------------------------------------------------------------------
 
 ##### bshall (layer 9, 10)
@@ -98,17 +98,17 @@ Results for each model's best performing layer evaluated on each dataset.
     ---------------------------------------------------------------------------
     layer 9:
       Word boundaries:
-      Precision: 44.52%
-      Recall: 46.29%
-      F1-score: 45.39%
-      R-value: 52.68%
+      Precision: 44.59%
+      Recall: 46.34%
+      F1-score: 45.45%
+      R-value: 52.74%
 
     layer 10:
       Word boundaries:
-      Precision: 45.24%
-      Recall: 44.98%
-      F1-score: 45.11%
-      R-value: 53.24%
+      Precision: 45.29%
+      Recall: 45.02%
+      F1-score: 45.15%
+      R-value: 53.28%
     ---------------------------------------------------------------------------
 
 #### melspec
@@ -270,8 +270,6 @@ Results for each model's best performing layer evaluated on each dataset.
     ---------------------------------------------------------------------------
 
 <!-- #### Notes
-- import: pytorch audio or librosa (audio manipulation), os (manipulate file structure), json (to save files in json format), fairseq (to load NN checkpoints)
-- use bash commands to load data (store in data dictionary)
 - to use venv for [HuggingFace](https://huggingface.co/docs/transformers/en/installation):
   - create: python -m venv .venv
   - activate: source .env/bin/activate OR source .venv/bin/activate

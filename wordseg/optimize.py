@@ -38,7 +38,7 @@ def grid_search_layer(data, norm_embeddings, strict):
                     
                 p, r, f = eval_segmentation(peaks, alignment_end_frames, strict=strict)
                 rval = get_rvalue(p, r)
-                if (f+rval)/2 > (optimal_parameters['f1'] + optimal_parameters['rval'])/2:
+                if (f+rval)/2 > (optimal_parameters['f1'] + optimal_parameters['rval'])/2: # can also only use r-value to optimize
                     optimal_parameters['distance'] = distance
                     optimal_parameters['window_size'] = window_size
                     optimal_parameters['prominence'] = prominence
@@ -47,13 +47,14 @@ def grid_search_layer(data, norm_embeddings, strict):
                 
     return optimal_parameters
 
-def grid_search(embeddings_dir, alignments_dir, sample_size=2000, strict = True):
+def grid_search(embeddings_dir, alignments_dir, sample_size=2000, strict = True, melspec = False):
     models = ['w2v2_hf', 'w2v2_fs', 'hubert_hf', 'hubert_fs', 'hubert_shall']
     layers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
     optimised_paramters = {}
+
     for model in tqdm(models, desc='Models'):
         optimised_paramters[model] = {}
-        for layer in tqdm(layers, desc=f'{model}: Layers'): # TODO maybe sample once and just change model and layer in the sample paths and then load the new embeddings
+        for layer in tqdm(layers, desc=f'{model}: Layers'):
             data = utils.Features(root_dir=embeddings_dir, model_name=model, layer=layer, data_dir=alignments_dir, num_files=sample_size)
 
             # Embeddings
@@ -67,6 +68,23 @@ def grid_search(embeddings_dir, alignments_dir, sample_size=2000, strict = True)
 
             hyperparameters = grid_search_layer(data, norm_embeddings, strict)
             optimised_paramters[model][layer] = hyperparameters
+        print(optimised_paramters)
+
+    if melspec:
+        optimised_paramters["melspec"] = {}
+        data = utils.Features(root_dir=embeddings_dir, model_name="melspec", layer=-1, data_dir=alignments_dir, num_files=sample_size)
+
+        # Embeddings
+        sample = data.sample_embeddings() # sample from the feature embeddings
+        embeddings = data.load_embeddings(sample) # load the sampled embeddings
+        norm_embeddings = data.normalize_features(embeddings) # normalize the sampled embeddings
+
+        # Alignments
+        alignments = data.get_alignment_paths(files=sample) # get the paths to the alignments corresponding to the sampled embeddings
+        data.set_alignments(files=alignments) # set the text, start and end attributes of the alignment files
+
+        hyperparameters = grid_search_layer(data, norm_embeddings, strict)
+        optimised_paramters["melspec"] = hyperparameters
         print(optimised_paramters)
 
     with open("optimized_parameters.json", "w") as outfile:
@@ -96,7 +114,11 @@ if __name__ == "__main__":
         '--strict',
         action=argparse.BooleanOptionalAction
     )
+    parser.add_argument( # optional argument to additionally optimize melspec features
+        '--melspec',
+        action=argparse.BooleanOptionalAction
+    )
 
-    args = parser.parse_args() #python3 wordseg/optimize.py /media/hdd/embeddings /media/hdd/data/librispeech_alignments 2000 --strict
+    args = parser.parse_args() #python3 wordseg/optimize.py /media/hdd/embeddings/librispeech /media/hdd/data/librispeech_alignments 2000 --strict --melspec
 
-    grid_search(args.embeddings_dir, args.alignments_dir, args.sample_size, args.strict)
+    grid_search(args.embeddings_dir, args.alignments_dir, args.sample_size, args.strict, args.melspec)
