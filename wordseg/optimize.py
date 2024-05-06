@@ -16,9 +16,9 @@ from segment import Segmentor
 
 def grid_search_layer(data, norm_embeddings, strict):
     distances = ['euclidean', 'cosine']
-    window_sizes = [3, 4, 5, 6, 7]
-    prominences = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-    optimal_parameters = {'distance': '', 'window_size': 0, 'prominence': 0, 'f1': 0, 'rval': 0}
+    window_sizes = [3, 4, 5, 6, 7] # [2, 3, 4, 5]
+    prominences = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9] # [0.1, 0.15, 0.2, 0.3, 0.4, 0.5]
+    optimal_parameters = {'distance': '', 'window_size': 0, 'prominence': 0, 'precision': 0, 'recall': 0, 'f1': 0, 'rval': 0}
     for prominence in tqdm(prominences, desc='Prominences'):
         for distance in distances:
             for window_size in window_sizes:
@@ -35,19 +35,22 @@ def grid_search_layer(data, norm_embeddings, strict):
                 for alignment_times in alignment_end_times:
                     alignment_frames = [data.get_frame_num(end_time) for end_time in alignment_times]
                     alignment_end_frames.append(alignment_frames)
-                    
-                p, r, f = eval_segmentation(peaks, alignment_end_frames, strict=strict)
+                
+                p, r, f = eval_segmentation(peaks, alignment_end_frames, strict=strict, tolerance=1)
                 rval = get_rvalue(p, r)
+                # if r+(rval)/2 > optimal_parameters['recall'] + (optimal_parameters['rval'])/2:
                 if (f+rval)/2 > (optimal_parameters['f1'] + optimal_parameters['rval'])/2: # can also only use r-value to optimize
                     optimal_parameters['distance'] = distance
                     optimal_parameters['window_size'] = window_size
                     optimal_parameters['prominence'] = prominence
+                    optimal_parameters['precision'] = p
+                    optimal_parameters['recall'] = r
                     optimal_parameters['f1'] = f
                     optimal_parameters['rval'] = rval
                 
     return optimal_parameters
 
-def grid_search(embeddings_dir, alignments_dir, sample_size=2000, strict = True, melspec = False):
+def grid_search(embeddings_dir, alignments_dir, align_format, sample_size=2000, strict = True, melspec = False):
     models = ['w2v2_hf', 'w2v2_fs', 'hubert_hf', 'hubert_fs', 'hubert_shall']
     layers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
     optimised_paramters = {}
@@ -55,7 +58,7 @@ def grid_search(embeddings_dir, alignments_dir, sample_size=2000, strict = True,
     for model in tqdm(models, desc='Models'):
         optimised_paramters[model] = {}
         for layer in tqdm(layers, desc=f'{model}: Layers'):
-            data = utils.Features(root_dir=embeddings_dir, model_name=model, layer=layer, data_dir=alignments_dir, num_files=sample_size)
+            data = utils.Features(root_dir=embeddings_dir, model_name=model, layer=layer, data_dir=alignments_dir, num_files=sample_size, alignment_format=align_format)
 
             # Embeddings
             sample = data.sample_embeddings() # sample from the feature embeddings
@@ -72,7 +75,7 @@ def grid_search(embeddings_dir, alignments_dir, sample_size=2000, strict = True,
 
     if melspec:
         optimised_paramters["melspec"] = {}
-        data = utils.Features(root_dir=embeddings_dir, model_name="melspec", layer=-1, data_dir=alignments_dir, num_files=sample_size)
+        data = utils.Features(root_dir=embeddings_dir, model_name="melspec", layer=-1, data_dir=alignments_dir, num_files=sample_size, alignment_format=align_format)
 
         # Embeddings
         sample = data.sample_embeddings() # sample from the feature embeddings
@@ -110,6 +113,12 @@ if __name__ == "__main__":
         help="number of embeddings to sample.",
         type=int,
     )
+    parser.add_argument(
+        "--align_format",
+        help="extension of the alignment files (defaults to .TextGrid).",
+        default=".TextGrid",
+        type=str,
+    )
     parser.add_argument( # optional argument to make the evaluation strict
         '--strict',
         action=argparse.BooleanOptionalAction
@@ -119,6 +128,7 @@ if __name__ == "__main__":
         action=argparse.BooleanOptionalAction
     )
 
-    args = parser.parse_args() #python3 wordseg/optimize.py /media/hdd/embeddings/librispeech /media/hdd/data/librispeech_alignments 2000 --strict --melspec
+    args = parser.parse_args() # python3 wordseg/optimize.py /media/hdd/embeddings/librispeech /media/hdd/data/librispeech_alignments 2000 --strict --melspec
+                               # python3 wordseg/optimize.py /media/hdd/embeddings/buckeye/test /media/hdd/data/buckeye_alignments/test 2000 --strict --align_format='.txt'
 
-    grid_search(args.embeddings_dir, args.alignments_dir, args.sample_size, args.strict, args.melspec)
+    grid_search(args.embeddings_dir, args.alignments_dir, args.align_format, args.sample_size, args.strict, args.melspec)
