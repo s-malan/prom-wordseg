@@ -7,8 +7,10 @@ Date: March 2024
 """
 
 from wordseg import utils, segment, evaluate
+import numpy as np
 import argparse
 import json
+import os
 from pathlib import Path
 import matplotlib.pyplot as plt
 
@@ -180,6 +182,12 @@ if __name__ == "__main__":
         default=".TextGrid",
         type=str,
     )
+    parser.add_argument(
+        "--save_out",
+        help="option to save the output segment boundaries in ms to the specified directory.",
+        default=None,
+        type=Path,
+    )
     parser.add_argument( # optional argument to load the optimized hyperparameters from a file
         '--load_hyperparams',
         action=argparse.BooleanOptionalAction
@@ -191,7 +199,9 @@ if __name__ == "__main__":
 
     args = parser.parse_args() #python3 extract_seg.py w2v2_hf 12 /media/hdd/embeddings/librispeech /media/hdd/data/librispeech_alignments -1 --load_hyperparams --strict
     # python3 extract_seg.py w2v2_hf 12 /media/hdd/embeddings/buckeye/dev /media/hdd/data/buckeye_alignments/dev -1 --align_format=.txt --load_hyperparams --strict
-    
+    # python3 extract_seg.py hubert_shall 10 /media/hdd/embeddings/buckeye/test /media/hdd/data/buckeye_alignments/test -1 --align_format=.txt --save_out=/media/hdd/segments/tti_wordseg/buckeye/test --load_hyperparams --strict
+    # python3 extract_seg.py hubert_shall 10 /media/hdd/embeddings/zrc/zrc2017_train_segments/english /media/hdd/data/zrc_alignments/zrc2017_train_alignments/english -1 --align_format=.txt --save_out=/media/hdd/segments/tti_wordseg/zrc2017_train_segments/english --load_hyperparams --strict
+
     if not args.load_hyperparams: # ask for hyperparameters
         print("Enter the hyperparameters for the segmentation algorithm: ")
         dist = str(input("Distance metric (euclidean, cosine): "))
@@ -217,15 +227,24 @@ if __name__ == "__main__":
     # Segmenting
     peaks, prominences, segmentor = get_word_segments(norm_embeddings, distance_type=dist, prominence=prom, window_size=window)
 
+    # Optionally save the output segment boundaries
+    if args.save_out is not None:
+        root_save = args.save_out / args.model / str(args.layer)
+        for i, (peak, file) in enumerate(zip(peaks, sample)):
+            if len(peak) == 0:
+                peak = np.array([embeddings[i].shape[0]]) # add a peak at the end of the file
+            peak = data.get_sample_second(peak) # get peak to seconds
+            save_dir = (root_save / os.path.split(file)[-1]).with_suffix(".list")
+            save_dir.parent.mkdir(parents=True, exist_ok=True)
+            with open(save_dir, "w") as f: # save the landmarks to a file
+                for l in peak:
+                    f.write(f"{l}\n")
+
     # Alignments
     set_alignments(data, sample)
 
     # Evaluate
-    alignment_end_times = [alignment.end for alignment in data.alignment_data[:]]
-    alignment_end_frames = []
-    for alignment_times in alignment_end_times:
-        alignment_frames = [data.get_frame_num(end_time) for end_time in alignment_times]
-        alignment_end_frames.append(alignment_frames)
+    alignment_end_frames = [alignment.end for alignment in data.alignment_data[:]]
 
     p, r, f = evaluate.eval_segmentation(peaks, alignment_end_frames, strict=args.strict)
     rval = evaluate.get_rvalue(p, r)

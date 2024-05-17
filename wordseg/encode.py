@@ -265,6 +265,8 @@ class EncodeAudio:
         for i in range(layer):
             with torch.inference_mode():
                 wav = F.pad(wav, ((400 - 320) // 2, (400 - 320) // 2))
+                if wav.shape[-1] < 400: # pad to be at least 400 (otherwise cannot encode)
+                    wav = F.pad(wav, (400 - wav.shape[-1], 400 - wav.shape[-1]))
                 x, _ = self.model.encode(wav, layer=i)
             
             _, last_dir = os.path.split(self.save_dir)
@@ -346,7 +348,6 @@ class EncodeAudio:
                     
                     self.save_embedding(wav, Path(file_path))
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Encode an audio dataset.")
     parser.add_argument(
@@ -374,6 +375,7 @@ if __name__ == "__main__":
         type=str,
     )
     args = parser.parse_args() # python3 wordseg/encode.py w2v2_fs /media/hdd/data/librispeech/dev-clean/ /media/hdd/embeddings/librispeech --extension=.flac
+                               # python3 wordseg/encode.py hubert_shall /media/hdd/data/zrc/zrc2017_train_segments/english /media/hdd/embeddings/zrc/zrc2017_train_segments/english --extension=.wav
 
     encoder = EncodeAudio(args.model, args.in_dir, args.out_dir, args.extension)
     encoder.get_encodings()

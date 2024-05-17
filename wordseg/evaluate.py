@@ -7,6 +7,7 @@ Date: March 2024
 """
 
 import numpy as np
+from tqdm import tqdm
 
 def eval_segmentation(seg, ref, strict=True, tolerance=1):
     """
@@ -33,23 +34,27 @@ def eval_segmentation(seg, ref, strict=True, tolerance=1):
     num_hit = 0 #Nhit
     
     assert len(seg) == len(ref) # Check if the number of utterances in the hypothesis and reference are the same
-    for i_utterance in range(len(seg)): # for each utterance
-        prediction = seg[i_utterance]
+    for i_utterance in tqdm(range(len(seg)), desc="Evaluation"): # for each utterance
+        prediction = seg[i_utterance].tolist()
         ground_truth = ref[i_utterance]
 
-        if len(prediction) > 0 and abs(prediction[-1] - ground_truth[-1]) <= tolerance: # if the last boundary is within the tolerance, delete it since it would have hit
+        if len(prediction) > 0 and len(ground_truth) > 0 and abs(prediction[-1] - ground_truth[-1]) <= tolerance: # if the last boundary is within the tolerance, delete it since it would have hit
             prediction = prediction[:-1]
-
-        ground_truth = ground_truth[:-1] # Remove the last boundary of the reference if there is more than one boundary
+            if len(ground_truth) > 0: # Remove the last boundary of the reference if there is more than one boundary
+                ground_truth = ground_truth[:-1]
 
         num_seg += len(prediction)
         num_ref += len(ground_truth)
 
+        if len(prediction) == 0 or len(ground_truth) == 0: # no hits possible
+            continue
+
         # count the number of hits
-        for i_ref in ground_truth: # multiple ref can still hit on a single seg
-            for i_seg in prediction:
+        for i_ref in ground_truth:
+            for i, i_seg in enumerate(prediction):
                 if abs(i_ref - i_seg) <= tolerance:
                     num_hit += 1
+                    prediction.pop(i) # remove the segmentation boundary that was hit
                     if strict: break # makes the evaluation strict, so that a reference boundary can only be hit once
 
     # Calculate metrics, avoid division by zero:

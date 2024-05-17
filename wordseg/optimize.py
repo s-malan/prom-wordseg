@@ -30,15 +30,11 @@ def grid_search_layer(data, norm_embeddings, strict):
                 peaks, _ = segment.peak_detection() # find the peaks in the distances
 
                 # Evaluate
-                alignment_end_times = [alignment.end for alignment in data.alignment_data[:]]
-                alignment_end_frames = []
-                for alignment_times in alignment_end_times:
-                    alignment_frames = [data.get_frame_num(end_time) for end_time in alignment_times]
-                    alignment_end_frames.append(alignment_frames)
+                alignment_end_frames = [alignment.end for alignment in data.alignment_data[:]]
                 
                 p, r, f = eval_segmentation(peaks, alignment_end_frames, strict=strict, tolerance=1)
                 rval = get_rvalue(p, r)
-                # if r+(rval)/2 > optimal_parameters['recall'] + (optimal_parameters['rval'])/2:
+                # if r+(rval)/2 > optimal_parameters['recall'] + (optimal_parameters['rval'])/2: # /5 to max recall
                 if (f+rval)/2 > (optimal_parameters['f1'] + optimal_parameters['rval'])/2: # can also only use r-value to optimize
                     optimal_parameters['distance'] = distance
                     optimal_parameters['window_size'] = window_size
@@ -50,7 +46,7 @@ def grid_search_layer(data, norm_embeddings, strict):
                 
     return optimal_parameters
 
-def grid_search(embeddings_dir, alignments_dir, align_format, sample_size=2000, strict = True, melspec = False):
+def grid_search(embeddings_dir, alignments_dir, align_format, sample_size=2000, strict = True, signal_type = None):
     models = ['w2v2_hf', 'w2v2_fs', 'hubert_hf', 'hubert_fs', 'hubert_shall']
     layers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
     optimised_paramters = {}
@@ -73,9 +69,9 @@ def grid_search(embeddings_dir, alignments_dir, align_format, sample_size=2000, 
             optimised_paramters[model][layer] = hyperparameters
         print(optimised_paramters)
 
-    if melspec:
-        optimised_paramters["melspec"] = {}
-        data = utils.Features(root_dir=embeddings_dir, model_name="melspec", layer=-1, data_dir=alignments_dir, num_files=sample_size, alignment_format=align_format)
+    if signal_type is not None:
+        optimised_paramters['f{signal_type}'] = {}
+        data = utils.Features(root_dir=embeddings_dir, model_name=signal_type, layer=-1, data_dir=alignments_dir, num_files=sample_size, alignment_format=align_format)
 
         # Embeddings
         sample = data.sample_embeddings() # sample from the feature embeddings
@@ -87,7 +83,7 @@ def grid_search(embeddings_dir, alignments_dir, align_format, sample_size=2000, 
         data.set_alignments(files=alignments) # set the text, start and end attributes of the alignment files
 
         hyperparameters = grid_search_layer(data, norm_embeddings, strict)
-        optimised_paramters["melspec"] = hyperparameters
+        optimised_paramters['f{signal_type}'] = hyperparameters
         print(optimised_paramters)
 
     with open("optimized_parameters.json", "w") as outfile:
@@ -119,16 +115,18 @@ if __name__ == "__main__":
         default=".TextGrid",
         type=str,
     )
+    parser.add_argument( # optional argument to additionally optimize melspec features
+        '--signal', # options are mfcc and melspec
+        default=None,
+        type=str
+    )
     parser.add_argument( # optional argument to make the evaluation strict
         '--strict',
-        action=argparse.BooleanOptionalAction
-    )
-    parser.add_argument( # optional argument to additionally optimize melspec features
-        '--melspec',
         action=argparse.BooleanOptionalAction
     )
 
     args = parser.parse_args() # python3 wordseg/optimize.py /media/hdd/embeddings/librispeech /media/hdd/data/librispeech_alignments 2000 --strict --melspec
                                # python3 wordseg/optimize.py /media/hdd/embeddings/buckeye/test /media/hdd/data/buckeye_alignments/test 2000 --strict --align_format='.txt'
+                               # python3 wordseg/optimize.py /media/hdd/embeddings/zrc/zrc2017_train_segments/english /media/hdd/data/zrc_alignments/zrc2017_train_alignments/english -1 --strict --align_format='.txt'
 
-    grid_search(args.embeddings_dir, args.alignments_dir, args.align_format, args.sample_size, args.strict, args.melspec)
+    grid_search(args.embeddings_dir, args.alignments_dir, args.align_format, args.sample_size, args.strict, args.signal)

@@ -9,6 +9,7 @@ Date: February 2024
 import numpy as np
 import torch
 from glob import glob
+from tqdm import tqdm
 import os
 from pathlib import Path
 import textgrids # https://pypi.org/project/praat-textgrids/
@@ -27,6 +28,15 @@ class Alignment_Data:
     type : String
         The type of alignment to extract from the file (e.g. 'words', 'phones')
         default: 'words'
+
+    Attributes
+    ----------
+    text : list (String)
+        The text of the alignment
+    start : list (int)
+        The start frame of the alignment
+    end : list (int)
+        The end frame of the alignment
     """
     def __init__(
         self, dir, alignment_format, type='words'
@@ -39,7 +49,7 @@ class Alignment_Data:
         self.start = []
         self.end = []
 
-    def set_attributes(self):
+    def set_attributes(self, features):
         """
         Sets the text, start and end attributes of the object from the alignment file
 
@@ -52,15 +62,18 @@ class Alignment_Data:
         if self.alignment_format == '.TextGrid':
             for word in textgrids.TextGrid(self.dir)[self.type]:
                 self.text.append(word.text)
-                self.start.append(word.xmin)
-                self.end.append(word.xmax)
+                self.start.append(float(word.xmin))
+                self.end.append(float(word.xmax))
         elif self.alignment_format == '.txt':
             with open(self.dir, 'r') as f:
                 for line in f:
                     line = line.split()
-                    self.start.append(float(line[0])*0.01)
-                    self.end.append(float(line[1])*0.01)
+                    self.start.append(float(line[0]))
+                    self.end.append(float(line[1]))
                     self.text.append(line[2])
+        
+        self.start = features.get_frame_num(np.array(self.start))
+        self.end = features.get_frame_num(np.array(self.end))
     
     def __str__(self):
         return f"Alignment_Data({self.dir}, {self.text}, {self.start}, {self.end})"
@@ -150,7 +163,7 @@ class Features:
 
         embeddings = []
 
-        for file in files:
+        for file in tqdm(files, desc="Loading Embeddings"):
             embedding = torch.from_numpy(np.load(file))
             if len(embedding.shape) == 1: # if only one dimension, add a dimension
                 embeddings.append(embedding.unsqueeze(0))
@@ -180,7 +193,7 @@ class Features:
         scaler = StandardScaler()
         scaler.partial_fit(stacked_features) # (n_samples, n_features)
         normalized_features = []
-        for feature in features:
+        for feature in tqdm(features, desc="Normalizing Features"):
             normalized_features.append(torch.from_numpy(scaler.transform(feature))) # (n_samples, n_features)
         return normalized_features
 
@@ -203,7 +216,7 @@ class Features:
 
         alignments = []
 
-        for file in files: # TODO make this work better, the -4 is a hack
+        for file in tqdm(files, desc="Sample Alignments"): # TODO make this work better, the -4 is a hack
             if self.alignment_format == '.TextGrid':
                 sub_dir = file.split("/")[-4:]
                 align_dir = os.path.join(self.data_dir, *sub_dir)
@@ -228,9 +241,9 @@ class Features:
             A list of file paths to the alignment files corresponding to the sampled embeddings
         """
             
-        for file in files:
+        for file in tqdm(files, desc="Reading Alignment"):
             alignment = Alignment_Data(file, self.alignment_format, type='words')
-            alignment.set_attributes()
+            alignment.set_attributes(self)
             self.alignment_data.append(alignment)
 
     def get_frame_num(self, seconds): # Works
@@ -250,7 +263,7 @@ class Features:
             The feature embedding frame number corresponding to the given number of seconds 
         """
 
-        return round(seconds / self.frames_per_ms * 1000) # seconds (= samples / sample_rate) / 20ms per frame * 1000ms per second
+        return np.round(seconds / self.frames_per_ms * 1000) # seconds (= samples / sample_rate) / 20ms per frame * 1000ms per second
 
     def get_sample_second(self, frame_num): # Works
         """

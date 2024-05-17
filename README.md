@@ -274,4 +274,7 @@ Results for each model's best performing layer evaluated on each dataset.
   - create: python -m venv .venv
   - activate: source .env/bin/activate OR source .venv/bin/activate
   - deactivate: deactivate
-  - delete: deactivate AND sudo rm -rf venv -->
+  - delete: deactivate AND sudo rm -rf venv 
+- optimize used for other datasets
+  - r_rval_copy is buckeye test
+  - r_rval is ZS2017 train-->

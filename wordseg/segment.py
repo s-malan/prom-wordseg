@@ -9,6 +9,7 @@ Date: March 2024
 import numpy as np
 import argparse
 from pathlib import Path
+from tqdm import tqdm
 from scipy.spatial import distance
 from scipy.signal import find_peaks
 from scipy.signal import peak_prominences # used to find the prominences of the peaks
@@ -55,7 +56,7 @@ class Segmentor:
 
         scaler = StandardScaler()
         
-        for embedding in embeddings:
+        for embedding in tqdm(embeddings, desc="Calculating Distances"):
             if self.distance == "euclidean":
                 embedding_dist = np.diff(embedding, axis=0)
                 euclidean_dist = np.linalg.norm(embedding_dist, axis=1)
@@ -80,7 +81,7 @@ class Segmentor:
             Object containing all hyperparameters and methods to segment the embeddings into words
         """
 
-        for dist in self.distances:
+        for dist in tqdm(self.distances, desc="Moving Average"):
             dist = np.pad(dist, (self.window_size // 2, self.window_size // 2), mode='edge') # TODO check if this is the correct padding
             box = np.ones(self.window_size) / self.window_size
             self.smoothed_distances.append(np.convolve(dist, box, 'valid'))
@@ -105,7 +106,7 @@ class Segmentor:
         peaks = []
         prominences = []
 
-        for smooth_distance in self.smoothed_distances:
+        for smooth_distance in tqdm(self.smoothed_distances, desc="Peak Detection"):
             peaks_found, _ = find_peaks(smooth_distance, prominence=self.prominence)
             prominences_found = peak_prominences(smooth_distance, peaks_found)[0]
             peaks.append(peaks_found)
