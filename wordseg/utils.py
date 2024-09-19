@@ -72,8 +72,8 @@ class Alignment_Data:
                     self.end.append(float(line[1]))
                     self.text.append(line[2])
         
-        self.start = features.get_frame_num(np.array(self.start))
-        self.end = features.get_frame_num(np.array(self.end))
+        self.start = features.get_frame_num(np.array(self.start)).astype(int)
+        self.end = features.get_frame_num(np.array(self.end)).astype(int)
     
     def __str__(self):
         return f"Alignment_Data({self.dir}, {self.text}, {self.start}, {self.end})"

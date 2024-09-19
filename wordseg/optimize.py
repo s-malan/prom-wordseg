@@ -15,9 +15,9 @@ from evaluate import eval_segmentation, get_rvalue
 from segment import Segmentor
 
 def grid_search_layer(data, norm_embeddings, strict):
-    distances = ['euclidean', 'cosine']
-    window_sizes = [3, 4, 5, 6, 7] # [2, 3, 4, 5]
-    prominences = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9] # [0.1, 0.15, 0.2, 0.3, 0.4, 0.5]
+    distances = ['cosine'] # ['euclidean', 'cosine']
+    window_sizes = [3, 4, 5, 6] # [3, 4, 5, 6, 7] # 
+    prominences = [0.1, 0.15, 0.2, 0.3, 0.4] # [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9] # 
     optimal_parameters = {'distance': '', 'window_size': 0, 'prominence': 0, 'precision': 0, 'recall': 0, 'f1': 0, 'rval': 0}
     for prominence in tqdm(prominences, desc='Prominences'):
         for distance in distances:
@@ -34,8 +34,8 @@ def grid_search_layer(data, norm_embeddings, strict):
                 
                 p, r, f = eval_segmentation(peaks, alignment_end_frames, strict=strict, tolerance=1)
                 rval = get_rvalue(p, r)
-                # if r+(rval)/2 > optimal_parameters['recall'] + (optimal_parameters['rval'])/2: # /5 to max recall
-                if (f+rval)/2 > (optimal_parameters['f1'] + optimal_parameters['rval'])/2: # can also only use r-value to optimize
+                if r+(rval)/2 > optimal_parameters['recall'] + (optimal_parameters['rval'])/2:
+                # if (f+rval)/2 > (optimal_parameters['f1'] + optimal_parameters['rval'])/2: # can also only use r-value to optimize
                     optimal_parameters['distance'] = distance
                     optimal_parameters['window_size'] = window_size
                     optimal_parameters['prominence'] = prominence
@@ -47,8 +47,8 @@ def grid_search_layer(data, norm_embeddings, strict):
     return optimal_parameters
 
 def grid_search(embeddings_dir, alignments_dir, align_format, sample_size=2000, strict = True, signal_type = None):
-    models = ['w2v2_hf', 'w2v2_fs', 'hubert_hf', 'hubert_fs', 'hubert_shall']
-    layers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    models = ['hubert_shall'] #['w2v2_hf', 'w2v2_fs', 'hubert_hf', 'hubert_fs', 'hubert_shall']
+    layers = [9, 10] #[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
     optimised_paramters = {}
 
     for model in tqdm(models, desc='Models'):
@@ -86,7 +86,7 @@ def grid_search(embeddings_dir, alignments_dir, align_format, sample_size=2000, 
         optimised_paramters['f{signal_type}'] = hyperparameters
         print(optimised_paramters)
 
-    with open("optimized_parameters.json", "w") as outfile:
+    with open("optimized_parameters_r_rval_ls.json", "w") as outfile:
         json.dump(optimised_paramters, outfile, indent=4)
 
 if __name__ == "__main__":
