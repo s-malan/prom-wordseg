@@ -1,5 +1,5 @@
 """
-Main script to extract embeddings, segment the audio, and evaluate the resulting segmentation.
+Main script to extract features, segment the audio, and evaluate the resulting segmentation.
 
 Author: Simon Malan
 Contact: 24227013@sun.ac.za
@@ -19,26 +19,26 @@ import torchaudio
 from glob import glob
 import itertools
 
-def get_embeddings(data, batch_num):
+def get_features(data, batch_num):
     """
-    Samples, loads and normalizes embeddings of the audio data.
+    Samples, loads and normalizes features of the audio data.
 
     Parameters
     ----------
     data : Features Class
-        Object containing all information to find alignments for the selected embeddings
+        Object containing all information to find alignments for the selected features
 
     Returns
     -------
     sample : numpy.ndarray
-        List of file paths to the sampled embeddings
-    embeddings : list
-        List of embeddings loaded from the file paths
-    norm_embeddings : list
-        The normalized feature embeddings
+        List of file paths to the sampled features
+    features : list
+        List of features loaded from the file paths
+    norm_features : list
+        The normalized feature features
     """
 
-    sample = data.sample_embeddings() # sample from the feature embeddings
+    sample = data.sample_features() # sample from the features
     if 25000*(batch_num+1) <= len(sample):
         sample = sample[25000*batch_num:25000*(batch_num+1)]
         batch = True
@@ -47,33 +47,33 @@ def get_embeddings(data, batch_num):
         batch = False
     batch_num = batch_num + 1
 
-    embeddings = data.load_embeddings(sample) # load the sampled embeddings
-    norm_embeddings = data.normalize_features(embeddings) # normalize the sampled embeddings
+    features = data.load_features(sample) # load the sampled features
+    norm_features = data.normalize_features(features) # normalize the sampled features
 
     index_del = []
-    for i, embedding in enumerate(norm_embeddings): # delete embeddings with only one frame
-        if embedding.shape[0] == 1:
+    for i, features in enumerate(norm_features): # delete features with only one frame
+        if features.shape[0] == 1:
             index_del.append(i)
 
     # for i in sorted(index_del, reverse=True):
     #     del sample[i]
-    #     del embeddings[i]
-    #     del norm_embeddings[i]
+    #     del features[i]
+    #     del norm_features[i]
     
     if len(sample) == 0:
-        print('No embeddings to segment, sampled a file with only one frame.')
+        print('No features to segment, sampled a file with only one frame.')
         exit()
     
-    return sample, embeddings, norm_embeddings, index_del, batch, batch_num
+    return sample, features, norm_features, index_del, batch, batch_num
 
-def get_word_segments(norm_embeddings, distance_type="euclidean", prominence=0.6, window_size=5):
+def get_word_segments(norm_features, distance_type="euclidean", prominence=0.6, window_size=5):
     """
-    Implements the word segmentation algorighm by finding peaks in the distances between feature embeddings
+    Implements the word segmentation algorighm by finding peaks in the distances between features
 
     Parameters
     ----------
-    norm_embeddings : numpy.ndarray
-        The normalized feature embeddings
+    norm_features : numpy.ndarray
+        The normalized feature features
     distance_type : String
         The type of the distance metric used ('euclidean' or 'cosine')
     prominence : float
@@ -88,12 +88,12 @@ def get_word_segments(norm_embeddings, distance_type="euclidean", prominence=0.6
     prominences : list (float)
         The prominence values of the detected peaks
     segmentor: Segmentor Class
-        The object containing all hyperparameters and methods to segment the embeddings into words
+        The object containing all hyperparameters and methods to segment the features into words
     """
 
-    # get the distances between adjacent frames in the embeddings
+    # get the distances between adjacent frames in the features
     segmentor = segment.Segmentor(distance_type=distance_type, prominence=prominence, window_size=window_size)
-    segmentor.get_distance(norm_embeddings)
+    segmentor.get_distance(norm_features)
 
     # get the moving average of the distances
     segmentor.moving_average()
@@ -104,17 +104,17 @@ def get_word_segments(norm_embeddings, distance_type="euclidean", prominence=0.6
 
 def set_alignments(data, sample):
     """
-    Sets the text, start and end attributes of the alignment files corresponding to the sampled embeddings
+    Sets the text, start and end attributes of the alignment files corresponding to the sampled features
 
     Parameters
     ----------
     data : Features Class
-        Object containing all information to find alignments for the selected embeddings
+        Object containing all information to find alignments for the selected features
     sample : list
-        List of file paths to the sampled embeddings
+        List of file paths to the sampled features
     """
 
-    alignments = data.get_alignment_paths(files=sample) # get the paths to the alignments corresponding to the sampled embeddings
+    alignments = data.get_alignment_paths(files=sample) # get the paths to the alignments corresponding to the sampled features
     data.set_alignments(files=alignments) # set the text, start and end attributes of the alignment files
 
 if __name__ == "__main__":
@@ -125,9 +125,9 @@ if __name__ == "__main__":
         Parameters
         ----------
         segment : Segmentor Class
-            Object containing all hyperparameters and methods to segment the embeddings into words
+            Object containing all hyperparameters and methods to segment the features into words
         data : Features Class
-            Object containing all information to find alignments for the selected embeddings
+            Object containing all information to find alignments for the selected features
         peaks : list (int)
             The frame indices of the detected peaks
         """
@@ -198,17 +198,17 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Segment speech audio.")
     parser.add_argument(
         "model",
-        help="available models (wav2vec2.0: HuggingFace, fairseq, hubert: HuggingFace, fairseq, hubert:main)",
-        default="w2v2_hf",
+        help="the model used for feature extraction",
+        default="mfcc",
     )
     parser.add_argument(
         "layer", # -1 for no layer
         type=int,
     )
     parser.add_argument(
-        "embeddings_dir",
-        metavar="embeddings-dir",
-        help="path to the embeddings directory.",
+        "features_dir",
+        metavar="features-dir",
+        help="path to the features directory.",
         type=Path,
     )
     parser.add_argument(
@@ -220,7 +220,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "sample_size",
         metavar="sample-size",
-        help="number of embeddings to sample (-1 to sample all available data).",
+        help="number of features to sample (-1 to sample all available data).",
         type=int,
     )
     parser.add_argument(
@@ -237,25 +237,23 @@ if __name__ == "__main__":
     )
     parser.add_argument( # optional argument to load the optimized hyperparameters from a file
         '--load_hyperparams',
-        action=argparse.BooleanOptionalAction
+        default=None,
+        type=Path,
     )
     parser.add_argument( # optional argument to make the evaluation strict
         '--strict',
         action=argparse.BooleanOptionalAction
     )
 
-    args = parser.parse_args() # python3 extract_seg.py hubert_shall 10 /media/hdd/embeddings/librispeech /media/hdd/data/librispeech_alignments -1 --load_hyperparams --save_out=/media/hdd/segments/tti_wordseg/librispeech/dev_clean --strict
-    # python3 extract_seg.py w2v2_hf 12 /media/hdd/embeddings/buckeye/dev /media/hdd/data/buckeye_alignments/dev -1 --align_format=.txt --load_hyperparams --strict
-    # python3 extract_seg.py hubert_shall 10 /media/hdd/embeddings/buckeye/test /media/hdd/data/buckeye_alignments/test -1 --align_format=.txt --save_out=/media/hdd/segments/tti_wordseg/buckeye/test --load_hyperparams --strict
-    # python3 extract_seg.py hubert_shall 10 /media/hdd/embeddings/zrc/zrc2017_train_segments/english /media/hdd/data/zrc_alignments/zrc2017_train_alignments/english -1 --align_format=.txt --save_out=/media/hdd/segments/tti_wordseg/zrc2017_train_segments/english --load_hyperparams --strict
+    args = parser.parse_args()
 
-    if not args.load_hyperparams: # ask for hyperparameters
+    if args.load_hyperparams is None: # ask for hyperparameters
         print("Enter the hyperparameters for the segmentation algorithm: ")
         dist = str(input("Distance metric (euclidean, cosine): "))
         window = int(input("Moving average window size (int): "))
         prom = float(input("Peak detection prominence value (float): "))
     else:
-        with open('optimized_parameters.json') as json_file:
+        with open(args.load_hyperparams) as json_file:
             params = json.load(json_file)
             dataset_name = args.alignments_dir.stem
             if args.layer != -1:
@@ -267,39 +265,39 @@ if __name__ == "__main__":
         frames_per_ms = 10
     else:
         frames_per_ms = 20
-    data = utils.Features(root_dir=args.embeddings_dir, model_name=args.model, layer=args.layer, data_dir=args.alignments_dir, alignment_format=args.align_format, num_files=args.sample_size, frames_per_ms=frames_per_ms)
+    data = utils.Features(root_dir=args.features_dir, model_name=args.model, layer=args.layer, data_dir=args.alignments_dir, alignment_format=args.align_format, num_files=args.sample_size, frames_per_ms=frames_per_ms)
 
-    # Embeddings
+    # features
     batch_num = 0
     batch = True
 
     while batch == True: # process in batches to avoid memory issues
         print("Batch number: ", batch_num)
-        sample, embeddings, norm_embeddings, index_one_frame, batch, batch_num = get_embeddings(data, batch_num)
+        sample, features, norm_features, index_one_frame, batch, batch_num = get_features(data, batch_num)
 
-        # Remove embeddings with only one frame
+        # Remove features with only one frame
         sample_one_frame = [sample[i] for i in index_one_frame]
         for i in sorted(index_one_frame, reverse=True):
             del sample[i]
-            del embeddings[i]
-            del norm_embeddings[i]
+            del features[i]
+            del norm_features[i]
         
         # Segmenting
-        peaks, prominences, segmentor = get_word_segments(norm_embeddings, distance_type=dist, prominence=prom, window_size=window)
+        peaks, prominences, segmentor = get_word_segments(norm_features, distance_type=dist, prominence=prom, window_size=window)
 
-        # Add samples and peaks for embeddings with only one frame
+        # Add samples and peaks for features with only one frame
         sample.extend(sample_one_frame)
         peaks.extend([np.array([1]) for _ in range(len(sample_one_frame))])
 
         # Ensure last frame boundaries (except if last boundary is within tolerance of last frame)
         for i, peak in enumerate(peaks):
             if len(peak) == 0: # -1 to compensate for padding
-                peak = np.array([embeddings[i].shape[0] - 1]) # add a peak at the end of the file
-            elif i < len(embeddings): # ensure there is a peak at the last frame (at samples longer than one frame)
-                # if abs(peak[-1] - embeddings[i].shape[0]) < 2: # in tolerance: remove and add at last frame
-                #     peak[-1] = embeddings[i].shape[0] - 1
-                if peak[-1] != embeddings[i].shape[0] and peak[-1] != embeddings[i].shape[0] - 1: # not in tolerance: add at last frame
-                    peak = np.append(peak, embeddings[i].shape[0] - 1)
+                peak = np.array([features[i].shape[0] - 1]) # add a peak at the end of the file
+            elif i < len(features): # ensure there is a peak at the last frame (at samples longer than one frame)
+                # if abs(peak[-1] - features[i].shape[0]) < 2: # in tolerance: remove and add at last frame
+                #     peak[-1] = features[i].shape[0] - 1
+                if peak[-1] != features[i].shape[0] and peak[-1] != features[i].shape[0] - 1: # not in tolerance: add at last frame
+                    peak = np.append(peak, features[i].shape[0] - 1)
             peaks[i] = peak
 
         # Optionally save the output segment boundaries
@@ -329,4 +327,4 @@ if __name__ == "__main__":
 
         del align_sample, alignment_end_frames
 
-        del sample, embeddings, norm_embeddings, peaks, prominences, segmentor # clear memory for next batch
+        del sample, features, norm_features, peaks, prominences, segmentor # clear memory for next batch

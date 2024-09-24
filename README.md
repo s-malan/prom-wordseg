@@ -4,31 +4,63 @@ As part of the "What Do Self-Supervised Speech Models Know About Words?" paper [
 
 ## Preliminaries
 
-**Pre-Process and Encode Speech Data**
-Use VAD to extract utterances from long speech files (specifically for ZeroSpeech and BuckEye) by cloning and following the recipes in the repository at [https://github.com/s-malan/data-process](https://github.com/s-malan/data-process).
-Use this repository and follow the recipe to encode speech audio by extracting features from various models (and their layers, where applicable).
+**Pre-Process Speech Data**
 
-## Example Usage
+Use VAD to extract utterances from long speech files (specifically for ZeroSpeech and BuckEye) by cloning and following the recipes in the repository at [https://github.com/s-malan/data-process](https://github.com/s-malan/data-process).
+
+**Encode Utterances**
+
+Use pre-trained speech models or signal processing methods to encode speech utterances. Example code can be found here [https://github.com/bshall/hubert/blob/main/encode.py](https://github.com/bshall/hubert/blob/main/encode.py) to use HuBERT base for self-supervised audio encoding.
+Save the encodings as .npy files with the file path as: 
+
+    model_name/layer_#/relative/path/to/input/audio.npy
+
+where # is replaced with an integer of the self-supervised models' layer used for encoding, and as:
+
+    model_name/relative/path/to/input/audio.npy
+
+when signal processing methods like MFCCs are used.
+
+<!-- ## Example Usage
 
 Get embeddings for each layer of a specified model:
 
-    python3 wordseg/encode.py model_name path/to/audio/root path/to/embeddings/save/root --extension=.flac
+    python3 wordseg/encode.py model_name path/to/audio path/to/encodings/save --extension=.flac
 
-The model_name can be one of: w2v2_fs, w2v2_hf, hubert_fs, hubert_hf, hubert_shall, melspec. The optional extension argument is the extension of the audio files to be processed.
+The model_name can be one of: w2v2_fs, w2v2_hf, hubert_fs, hubert_hf, hubert_shall, melspec. The optional extension argument is the extension of the audio files to be processed. -->
 
-Optimize hyperparameters for the word segmentation algorithm:
+## Scripts
 
-    python3 wordseg/optimize.py path/to/embeddings/root path/to/audio/alignments/root num_samples --strict=True --melspec=True
+<!-- **Optimize hyperparameters for the word segmentation algorithm**
 
-The num_samples argument can be set to -1 to sample all the possible audio files in the directory provided. The optional strict argument determines if the word boundary hit count is strict or lenient as decribed by D. Harwath in [this](https://ieeexplore.ieee.org/abstract/document/10022827) paper. The optional melspec argument additionally optimizes melspec features.
+Feed the algorithm some sample utterances to determine the hyperparameters using a grid-search over the three parameters: (1) distance function, (2) average window length, and (3) prominence threshold value.
 
-Run the word segmentation algorithm
+    python3 wordseg/optimize.py path/to/encodings path/to/audio/alignments num_samples --strict=True --sig_proc=True
 
-    python3 extract_seg.py model_name layer_num path/to/embeddings/root path/to/audio/alignments/root num_samples num_samples --align_format=.TextGrid --load_hyperparams=True --strict=True
+The num_samples argument can be set to -1 to sample all the possible audio files in the directory provided. The optional strict argument determines if the word boundary hit count is strict or lenient as decribed by D. Harwath in [this](https://ieeexplore.ieee.org/abstract/document/10022827) paper. The optional sig_proc argument additionally optimizes MFCC or LogMelSpectogram features. -->
 
-The model_name is defined as in 1. The layer_num is a valid layer in the specified model (for wav2vec2 and HuBERT this number is in the range [1,12]), for melspec this value must be -1. The num_samples argument is defined as in 2. The optional align_format argument specifies the extension type of the alignment files. The optional load_hyperparams argument loads the saved hyperparameters from 2. and otherwise prompts the user to provide hyperparameter values. The optional strict argument is defined as in 3.
+**Run the word segmentation algorithm**
 
-## Pre-Trained Speech Models
+    python3 extract_seg.py model_name layer_num path/to/embeddings path/to/audio/alignments num_samples num_samples --align_format=.TextGrid --save_out=path/to/output --load_hyperparams=path/to/parameters.json --strict=True
+
+The **layer_num** argument is a valid layer in the specified model, for signal processing models this value must be -1. The **num_samples** argument can be set to -1 to sample all the possible audio files in the directory provided. The optional **align_format** argument specifies the extension type of the alignment files. The optional **load_hyperparams** argument loads the saved hyperparameters from a JSON file with fields as described below, otherwise the user is prompted to provide hyperparameter values. The optional **strict** argument determines if the word boundary hit count is strict or lenient as decribed by D. Harwath in [this](https://ieeexplore.ieee.org/abstract/document/10022827) paper.
+
+Parameter JSON file structure (# is the layer number, omitted when a signal processing model is used):
+
+    {   "model_name": {
+            "#": {
+                "distance": "euclidean", # euclidean or cosine
+                "window_size": 6, # int
+                "prominence": 0.4, # float
+            }, etc.
+        }, etc. 
+    }
+
+**Evaluation**
+
+TODO link my evaluation repo and mention the zrc repo
+
+<!-- ## Pre-Trained Speech Models
 
 - Hubert
   - [fairseq](https://github.com/facebookresearch/fairseq/tree/main/examples/hubert)
@@ -36,7 +68,7 @@ The model_name is defined as in 1. The layer_num is a valid layer in the specifi
   - [bshall](https://github.com/bshall/hubert/tree/main)
 - wav2vec 2.0
   - [fairseq](https://github.com/facebookresearch/fairseq/tree/main/examples/wav2vec)
-  - [HuggingFace](https://huggingface.co/docs/transformers/en/model_doc/wav2vec2)
+  - [HuggingFace](https://huggingface.co/docs/transformers/en/model_doc/wav2vec2) -->
 
 ## Datasets
 

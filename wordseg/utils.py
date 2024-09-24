@@ -117,7 +117,7 @@ class Features:
         self.frames_per_ms = frames_per_ms
         self.alignment_data = []
 
-    def sample_embeddings(self): # Works
+    def sample_features(self): # Works
         """
         Randomly samples embeddings from the specified model and returns the file paths as a list.
 
@@ -144,7 +144,7 @@ class Features:
         embeddings_sample = np.random.choice(all_embeddings, self.num_files, replace=False)
         return embeddings_sample
 
-    def load_embeddings(self, files): # Works
+    def load_features(self, files): # Works
         """
         Load the sampled embeddings from file paths
 
