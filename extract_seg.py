@@ -150,7 +150,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--batch_size',
         default=25000,
-        int=Path,
+        type=int,
     )
 
     args = parser.parse_args()
@@ -168,6 +168,9 @@ if __name__ == "__main__":
                 params = params[args.model][str(args.layer)]
             else:
                 params = params[args.model]
+            dist = params['distance']
+            window = params['window_size']
+            prom = params['prominence']
     
     if args.model in ["mfcc", "melspec"]:
         frames_per_ms = 10
