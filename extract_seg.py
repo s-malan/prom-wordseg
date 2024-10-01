@@ -46,14 +46,9 @@ def get_features(data, batch_size, batch_num):
     norm_features = data.normalize_features(features) # normalize the sampled features
 
     index_del = []
-    for i, features in enumerate(norm_features): # delete features with only one frame
-        if features.shape[0] == 1:
+    for i, norm_feature in enumerate(norm_features): # delete features with only one frame
+        if norm_feature.shape[0] == 1:
             index_del.append(i)
-
-    # for i in sorted(index_del, reverse=True):
-    #     del sample[i]
-    #     del features[i]
-    #     del norm_features[i]
     
     if len(sample) == 0:
         print('No features to segment, sampled a file with only one frame.')
@@ -196,20 +191,17 @@ if __name__ == "__main__":
         # Segmenting
         peaks, prominences, segmentor = get_word_segments(norm_features, distance_type=dist, prominence=prom, window_size=window)
 
+        # Ensure last frame boundaries (except if last boundary is within tolerance of last frame)
+        for i, peak in enumerate(peaks):
+            if len(peak) == 0:
+                peak = np.array([features[i].shape[0] - 1]) # add a peak at the end of the file
+            elif peak[-1] != features[i].shape[0] and peak[-1] != features[i].shape[0] - 1: # add at last frame (if not there or in tolerance)
+                peak = np.append(peak, features[i].shape[0] - 1)
+            peaks[i] = peak
+
         # Add samples and peaks for features with only one frame
         sample.extend(sample_one_frame)
         peaks.extend([np.array([1]) for _ in range(len(sample_one_frame))])
-
-        # Ensure last frame boundaries (except if last boundary is within tolerance of last frame)
-        for i, peak in enumerate(peaks):
-            if len(peak) == 0: # -1 to compensate for padding
-                peak = np.array([features[i].shape[0] - 1]) # add a peak at the end of the file
-            elif i < len(features): # ensure there is a peak at the last frame (at samples longer than one frame)
-                # if abs(peak[-1] - features[i].shape[0]) < 2: # in tolerance: remove and add at last frame
-                #     peak[-1] = features[i].shape[0] - 1
-                if peak[-1] != features[i].shape[0] and peak[-1] != features[i].shape[0] - 1: # not in tolerance: add at last frame
-                    peak = np.append(peak, features[i].shape[0] - 1)
-            peaks[i] = peak
 
         # Optionally save the output segment boundaries
         if args.save_out is not None:
