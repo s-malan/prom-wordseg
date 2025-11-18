@@ -80,7 +80,7 @@ class Segmentor:
         """
 
         for dist in tqdm(self.distances, desc="Moving Average"):
-            dist = np.pad(dist, (self.window_size // 2, self.window_size // 2), mode='edge')
+            dist = np.pad(dist, ((self.window_size // 2) + 1, 0), mode='edge')
             box = np.ones(self.window_size) / self.window_size
             self.smoothed_distances.append(np.convolve(dist, box, 'valid'))
 

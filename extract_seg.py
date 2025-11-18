@@ -13,11 +13,6 @@ import argparse
 import json
 import os
 from pathlib import Path
-import matplotlib.pyplot as plt
-import torch
-import torchaudio
-from glob import glob
-import itertools
 
 def get_features(data, batch_size, batch_num):
     """
@@ -135,7 +130,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--batch_size',
         default=25000,
-        int=Path,
+        type=int,
     )
 
     args = parser.parse_args()
@@ -184,9 +179,9 @@ if __name__ == "__main__":
         # Ensure last frame boundaries (except if last boundary is within tolerance of last frame)
         for i, peak in enumerate(peaks):
             if len(peak) == 0:
-                peak = np.array([features[i].shape[0] - 1]) # add a peak at the end of the file
+                peak = np.array([features[i].shape[0]]) # add a peak at the end of the file
             elif peak[-1] != features[i].shape[0] and (peak[-1] != features[i].shape[0] - 1 or (frames_per_ms == 10 and peak[-1] != features[i].shape[0] - 2)): # add at last frame (if not there or in tolerance)
-                peak = np.append(peak, features[i].shape[0] - 1)
+                peak = np.append(peak, features[i].shape[0])
             peaks[i] = peak
 
         # Add samples and peaks for features with only one frame
